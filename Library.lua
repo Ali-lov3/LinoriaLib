@@ -37,6 +37,21 @@ end
 
 local IsMobile = InputService.TouchEnabled and not InputService.MouseEnabled
 
+local LastTouchPos = Vector2.new(0, 0)
+
+if IsMobile then
+    InputService.InputChanged:Connect(function(Input)
+        if Input.UserInputType == Enum.UserInputType.Touch then
+            LastTouchPos = Vector2.new(Input.Position.X, Input.Position.Y)
+        end
+    end)
+    InputService.InputBegan:Connect(function(Input)
+        if Input.UserInputType == Enum.UserInputType.Touch then
+            LastTouchPos = Vector2.new(Input.Position.X, Input.Position.Y)
+        end
+    end)
+end
+
 local ProtectGui = protectgui or (syn and syn.protect_gui) or (function() end);
 
 local ScreenGui = Instance.new('ScreenGui');
@@ -310,13 +325,8 @@ end;
 function Library:MouseIsOverOpenedFrame()
     local cx, cy
     if IsMobile then
-        local touches = InputService:GetTouchState()
-        if #touches > 0 then
-            cx = touches[1].Position.X
-            cy = touches[1].Position.Y
-        else
-            return false
-        end
+        cx = LastTouchPos.X
+        cy = LastTouchPos.Y
     else
         cx = Mouse.X
         cy = Mouse.Y
@@ -335,13 +345,8 @@ end;
 function Library:IsMouseOverFrame(Frame)
     local cx, cy
     if IsMobile then
-        local touches = InputService:GetTouchState()
-        if #touches > 0 then
-            cx = touches[1].Position.X
-            cy = touches[1].Position.Y
-        else
-            return false
-        end
+        cx = LastTouchPos.X
+        cy = LastTouchPos.Y
     else
         cx = Mouse.X
         cy = Mouse.Y
@@ -3686,9 +3691,9 @@ function Library:CreateWindow(...)
     if IsMobile then
         local BtnOuter = Library:Create('Frame', {
             BackgroundColor3 = Color3.new(0, 0, 0);
-            BorderColor3 = Color3.new(0, 0, 0);
+            BorderSizePixel = 0;
             Position = UDim2.fromOffset(10, 10);
-            Size = UDim2.fromOffset(110, 32);
+            Size = UDim2.fromOffset(40, 40);
             ZIndex = 300;
             Parent = ScreenGui;
         });
@@ -3697,7 +3702,8 @@ function Library:CreateWindow(...)
             BackgroundColor3 = Library.MainColor;
             BorderColor3 = Library.OutlineColor;
             BorderMode = Enum.BorderMode.Inset;
-            Size = UDim2.new(1, 0, 1, 0);
+            Position = UDim2.fromOffset(1, 1);
+            Size = UDim2.new(1, -2, 1, -2);
             ZIndex = 301;
             Parent = BtnOuter;
         });
@@ -3717,13 +3723,37 @@ function Library:CreateWindow(...)
 
         Library:AddToRegistry(BtnAccent, { BackgroundColor3 = 'AccentColor' });
 
-        local BtnLabel = Library:CreateLabel({
-            Size = UDim2.new(1, 0, 1, 0);
-            TextSize = 14;
-            Text = 'Open';
+        local line1 = Library:Create('Frame', {
+            AnchorPoint = Vector2.new(0.5, 0.5);
+            BackgroundColor3 = Library.FontColor;
+            BorderSizePixel = 0;
+            Position = UDim2.new(0.5, 0, 0.35, 0);
+            Size = UDim2.new(0.55, 0, 0, 2);
             ZIndex = 303;
             Parent = BtnInner;
         });
+        local line2 = Library:Create('Frame', {
+            AnchorPoint = Vector2.new(0.5, 0.5);
+            BackgroundColor3 = Library.FontColor;
+            BorderSizePixel = 0;
+            Position = UDim2.new(0.5, 0, 0.55, 0);
+            Size = UDim2.new(0.55, 0, 0, 2);
+            ZIndex = 303;
+            Parent = BtnInner;
+        });
+        local line3 = Library:Create('Frame', {
+            AnchorPoint = Vector2.new(0.5, 0.5);
+            BackgroundColor3 = Library.FontColor;
+            BorderSizePixel = 0;
+            Position = UDim2.new(0.5, 0, 0.75, 0);
+            Size = UDim2.new(0.55, 0, 0, 2);
+            ZIndex = 303;
+            Parent = BtnInner;
+        });
+
+        Library:AddToRegistry(line1, { BackgroundColor3 = 'FontColor' });
+        Library:AddToRegistry(line2, { BackgroundColor3 = 'FontColor' });
+        Library:AddToRegistry(line3, { BackgroundColor3 = 'FontColor' });
 
         local MobileBtn = Library:Create('TextButton', {
             BackgroundTransparency = 1;
@@ -3735,16 +3765,58 @@ function Library:CreateWindow(...)
 
         local menuOpen = false
 
+        local function setIcon(open)
+            if open then
+                line1.Visible = false;
+                line3.Visible = false;
+                line2.Position = UDim2.new(0.5, 0, 0.55, 0);
+                line2.Size = UDim2.new(0.55, 0, 0, 2);
+                local diag1 = Library:Create('Frame', {
+                    AnchorPoint = Vector2.new(0.5, 0.5);
+                    BackgroundColor3 = Library.FontColor;
+                    BorderSizePixel = 0;
+                    Position = UDim2.new(0.5, 0, 0.55, 0);
+                    Rotation = 45;
+                    Size = UDim2.new(0.55, 0, 0, 2);
+                    ZIndex = 303;
+                    Name = 'DiagA';
+                    Parent = BtnInner;
+                });
+                local diag2 = Library:Create('Frame', {
+                    AnchorPoint = Vector2.new(0.5, 0.5);
+                    BackgroundColor3 = Library.FontColor;
+                    BorderSizePixel = 0;
+                    Position = UDim2.new(0.5, 0, 0.55, 0);
+                    Rotation = -45;
+                    Size = UDim2.new(0.55, 0, 0, 2);
+                    ZIndex = 303;
+                    Name = 'DiagB';
+                    Parent = BtnInner;
+                });
+                Library:AddToRegistry(diag1, { BackgroundColor3 = 'FontColor' });
+                Library:AddToRegistry(diag2, { BackgroundColor3 = 'FontColor' });
+                line2.Visible = false;
+            else
+                line1.Visible = true;
+                line2.Visible = true;
+                line3.Visible = true;
+                local diagA = BtnInner:FindFirstChild('DiagA');
+                local diagB = BtnInner:FindFirstChild('DiagB');
+                if diagA then diagA:Destroy() end;
+                if diagB then diagB:Destroy() end;
+            end
+        end
+
         local function onToggle()
             menuOpen = not menuOpen
-            BtnLabel.Text = menuOpen and 'Close' or 'Open'
+            setIcon(menuOpen)
             task.spawn(Library.Toggle)
         end
 
         MobileBtn.MouseButton1Click:Connect(onToggle)
         MobileBtn.TouchTap:Connect(onToggle)
 
-        Library:MakeDraggable(BtnOuter, 32);
+        Library:MakeDraggable(BtnOuter, 40);
     end
 
     return Window;
