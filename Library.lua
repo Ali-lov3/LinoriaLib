@@ -21,19 +21,16 @@ local function GetInputPos(Input)
     return Mouse.X, Mouse.Y
 end
 
-local function IsDragActive()
-    if InputService.TouchEnabled and not InputService.MouseEnabled then
-        return #InputService:GetTouchState() > 0
+local function IsDragActive(Input)
+    if Input and Input.UserInputType == Enum.UserInputType.Touch then
+        return Input.UserInputState ~= Enum.UserInputState.End
     end
     return InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
 end
 
-local function GetDragPos()
-    if InputService.TouchEnabled and not InputService.MouseEnabled then
-        local touches = InputService:GetTouchState()
-        if #touches > 0 then
-            return touches[1].Position.X, touches[1].Position.Y
-        end
+local function GetDragPos(Input)
+    if Input and Input.UserInputType == Enum.UserInputType.Touch then
+        return Input.Position.X, Input.Position.Y
     end
     return Mouse.X, Mouse.Y
 end
@@ -195,7 +192,7 @@ end;
 function Library:MakeDraggable(Instance, Cutoff)
     Instance.Active = true;
 
-    local function StartDrag(startX, startY)
+    local function StartDrag(startX, startY, DragInput)
         local ObjPos = Vector2.new(
             startX - Instance.AbsolutePosition.X,
             startY - Instance.AbsolutePosition.Y
@@ -205,8 +202,8 @@ function Library:MakeDraggable(Instance, Cutoff)
             return;
         end;
 
-        while IsDragActive() do
-            local cX, cY = GetDragPos();
+        while IsDragActive(DragInput) do
+            local cX, cY = GetDragPos(DragInput);
             Instance.Position = UDim2.new(
                 0,
                 cX - ObjPos.X + (Instance.Size.X.Offset * Instance.AnchorPoint.X),
@@ -221,7 +218,7 @@ function Library:MakeDraggable(Instance, Cutoff)
     Instance.InputBegan:Connect(function(Input)
         if IsMouseOrTouch(Input) then
             local ix, iy = GetInputPos(Input);
-            StartDrag(ix, iy);
+            StartDrag(ix, iy, Input);
         end;
     end)
 end;
@@ -962,8 +959,8 @@ do
 
         SatVibMap.InputBegan:Connect(function(Input)
             if IsMouseOrTouch(Input) then
-                while IsDragActive() do
-                    local MX, MY = GetDragPos();
+                while IsDragActive(Input) do
+                    local MX, MY = GetDragPos(Input);
                     local MinX = SatVibMap.AbsolutePosition.X;
                     local MaxX = MinX + SatVibMap.AbsoluteSize.X;
                     local MouseX = math.clamp(MX, MinX, MaxX);
@@ -985,8 +982,8 @@ do
 
         HueSelectorInner.InputBegan:Connect(function(Input)
             if IsMouseOrTouch(Input) then
-                while IsDragActive() do
-                    local _, MY = GetDragPos();
+                while IsDragActive(Input) do
+                    local _, MY = GetDragPos(Input);
                     local MinY = HueSelectorInner.AbsolutePosition.Y;
                     local MaxY = MinY + HueSelectorInner.AbsoluteSize.Y;
                     local MouseY = math.clamp(MY, MinY, MaxY);
@@ -1018,8 +1015,8 @@ do
         if TransparencyBoxInner then
             TransparencyBoxInner.InputBegan:Connect(function(Input)
                 if IsMouseOrTouch(Input) then
-                    while IsDragActive() do
-                        local MX, _ = GetDragPos();
+                    while IsDragActive(Input) do
+                        local MX, _ = GetDragPos(Input);
                         local MinX = TransparencyBoxInner.AbsolutePosition.X;
                         local MaxX = MinX + TransparencyBoxInner.AbsoluteSize.X;
                         local MouseX = math.clamp(MX, MinX, MaxX);
@@ -2186,8 +2183,8 @@ do
                 local gPos = Fill.Size.X.Offset;
                 local Diff = mPos - (Fill.AbsolutePosition.X + gPos);
 
-                while IsDragActive() do
-                    local nMPos, _ = GetDragPos();
+                while IsDragActive(Input) do
+                    local nMPos, _ = GetDragPos(Input);
                     local nX = math.clamp(gPos + (nMPos - mPos) + Diff, 0, Slider.MaxSize);
 
                     local nValue = Slider:GetValueFromXOffset(nX);
