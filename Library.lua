@@ -3018,7 +3018,7 @@ function Library:CreateWindow(...)
     if type(Config.MenuFadeTime) ~= 'number' then Config.MenuFadeTime = 0.2 end
 
     if typeof(Config.Position) ~= 'UDim2' then Config.Position = UDim2.fromOffset(175, 50) end
-    if typeof(Config.Size) ~= 'UDim2' then Config.Size = UDim2.fromOffset(550, 600) end
+    if typeof(Config.Size) ~= 'UDim2' then Config.Size = UDim2.fromOffset(480, 520) end
 
     if Config.Center then
         Config.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -3687,40 +3687,67 @@ function Library:CreateWindow(...)
     Window.Holder = Outer;
 
     if IsMobile then
-        local MobileToggleBtn = Library:Create('TextButton', {
-            AnchorPoint = Vector2.new(0.5, 1);
-            BackgroundColor3 = Library.AccentColor;
-            BorderSizePixel = 0;
-            Position = UDim2.new(0.5, 0, 1, -12);
-            Size = UDim2.new(0, 130, 0, 38);
+        local BtnOuter = Library:Create('Frame', {
+            BackgroundColor3 = Color3.new(0, 0, 0);
+            BorderColor3 = Color3.new(0, 0, 0);
+            Position = UDim2.fromOffset(10, 10);
+            Size = UDim2.fromOffset(110, 32);
             ZIndex = 300;
-            Text = 'Menu offnen';
-            Font = Library.Font;
-            TextColor3 = Color3.new(1, 1, 1);
-            TextSize = 16;
             Parent = ScreenGui;
         });
 
-        Library:Create('UICorner', {
-            CornerRadius = UDim.new(0, 8);
-            Parent = MobileToggleBtn;
+        local BtnInner = Library:Create('Frame', {
+            BackgroundColor3 = Library.MainColor;
+            BorderColor3 = Library.OutlineColor;
+            BorderMode = Enum.BorderMode.Inset;
+            Size = UDim2.new(1, 0, 1, 0);
+            ZIndex = 301;
+            Parent = BtnOuter;
         });
 
-        Library:AddToRegistry(MobileToggleBtn, { BackgroundColor3 = 'AccentColor' });
+        Library:AddToRegistry(BtnInner, {
+            BackgroundColor3 = 'MainColor';
+            BorderColor3 = 'OutlineColor';
+        });
+
+        local BtnAccent = Library:Create('Frame', {
+            BackgroundColor3 = Library.AccentColor;
+            BorderSizePixel = 0;
+            Size = UDim2.new(1, 0, 0, 2);
+            ZIndex = 302;
+            Parent = BtnInner;
+        });
+
+        Library:AddToRegistry(BtnAccent, { BackgroundColor3 = 'AccentColor' });
+
+        local BtnLabel = Library:CreateLabel({
+            Size = UDim2.new(1, 0, 1, 0);
+            TextSize = 14;
+            Text = 'Open';
+            ZIndex = 303;
+            Parent = BtnInner;
+        });
+
+        local MobileBtn = Library:Create('TextButton', {
+            BackgroundTransparency = 1;
+            Size = UDim2.new(1, 0, 1, 0);
+            Text = '';
+            ZIndex = 304;
+            Parent = BtnOuter;
+        });
 
         local menuOpen = false
 
-        MobileToggleBtn.MouseButton1Click:Connect(function()
+        local function onToggle()
             menuOpen = not menuOpen
-            MobileToggleBtn.Text = menuOpen and 'Menu schliessen' or 'Menu offnen'
+            BtnLabel.Text = menuOpen and 'Close' or 'Open'
             task.spawn(Library.Toggle)
-        end)
+        end
 
-        MobileToggleBtn.TouchTap:Connect(function()
-            menuOpen = not menuOpen
-            MobileToggleBtn.Text = menuOpen and 'Menu schliessen' or 'Menu offnen'
-            task.spawn(Library.Toggle)
-        end)
+        MobileBtn.MouseButton1Click:Connect(onToggle)
+        MobileBtn.TouchTap:Connect(onToggle)
+
+        Library:MakeDraggable(BtnOuter, 32);
     end
 
     return Window;
