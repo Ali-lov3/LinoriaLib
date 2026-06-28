@@ -3400,6 +3400,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Size = UDim2.new(1, 0, 0.20000000298023224, 0),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 1,
+						Active = true,
 						LayoutOrder = settingsElemCount,
 						ZIndex = 1000,
 					}, SettingsFrame_Container)
@@ -3504,14 +3505,12 @@ UIAspectRatioConstraint.Parent = Slider
 
 					Slider.InputBegan:Connect(function(input)
 						if input.UserInputType == Enum.UserInputType.Touch then
-							input:Cancel()
 							dragging = true
 							update(input)
 						end
 					end)
 					Line.InputBegan:Connect(function(input)
 						if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-							if input.UserInputType == Enum.UserInputType.Touch then input:Cancel() end
 							dragging = true; update(input)
 						end
 					end)
@@ -4523,6 +4522,7 @@ UIAspectRatioConstraint.Parent = Colorpicker
 					Size = UDim2.new(1, 0, 0.20000000298023224, 0),
 					BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 					BackgroundTransparency = 1,
+					Active = true,
 					LayoutOrder = elemCount,
 				}, Elements)
 				New("UIAspectRatioConstraint", {
@@ -4619,14 +4619,12 @@ UIAspectRatioConstraint.Parent = Colorpicker
 
 				Slider.InputBegan:Connect(function(input)
 					if input.UserInputType == Enum.UserInputType.Touch then
-						input:Cancel()
 						dragging = true
 						update(input)
 					end
 				end)
 				Line.InputBegan:Connect(function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-						if input.UserInputType == Enum.UserInputType.Touch then input:Cancel() end
 						dragging = true
 						update(input)
 					end
@@ -6093,6 +6091,7 @@ UIAspectRatioConstraint.Parent = Toggle
 						Size = UDim2.new(1, 0, 0.20000000298023224, 0),
 						BackgroundColor3 = Color3.fromRGB(162, 162, 162),
 						BackgroundTransparency = 1,
+						Active = true,
 						LayoutOrder = accordionElemCount,
 						ZIndex = 100,
 					}, Container)
@@ -6197,14 +6196,12 @@ UIAspectRatioConstraint.Parent = Slider
 
 					Slider.InputBegan:Connect(function(input)
 						if input.UserInputType == Enum.UserInputType.Touch then
-							input:Cancel()
 							dragging = true
 							update(input)
 						end
 					end)
 					Line.InputBegan:Connect(function(input)
 						if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-							if input.UserInputType == Enum.UserInputType.Touch then input:Cancel() end
 							dragging = true; update(input)
 						end
 					end)
