@@ -3141,8 +3141,8 @@ UIStroke.Parent = Elements
 
                                 local SettingsFrame = Instance.new('Frame')
                                 SettingsFrame.Name = "SettingsFrame"
-                                SettingsFrame.Position = UDim2.new(1, 4, 0, 0)
-                                SettingsFrame.Size = UDim2.new(1, 0, 0, 20)
+                                SettingsFrame.Position = UDim2.new(0, 0, 1, 2)
+                                SettingsFrame.Size = UDim2.new(1, 0, 0, 0)
                                 SettingsFrame.BackgroundColor3 = Color3.fromRGB(17,20,30)
                                 SettingsFrame.BackgroundTransparency = 1
                                 SettingsFrame.BorderSizePixel = 0
@@ -3222,11 +3222,10 @@ UIStroke.Parent = Elements
                                         if settingsOpen then
                                                 SettingsFrame.Visible = true
                                                 SettingsFrame.BackgroundTransparency = 1
-                                                SettingsFrame.Size = UDim2.new(0.8980000019073486, 0, 0, 0)
-                                                task.defer(function()
-                                                        local h = getSettingsHeight()
-                                                        Tween(SettingsFrame, { BackgroundTransparency = 0.019 }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-                                                end)
+                                                SettingsFrame.Size = UDim2.new(1, 0, 0, 0)
+                                                task.wait()
+                                                local h = math.max(SFLayout.AbsoluteContentSize.Y + SFLabelContainer.AbsoluteSize.Y + 10, 50)
+                                                Tween(SettingsFrame, { BackgroundTransparency = 0.019, Size = UDim2.new(1, 0, 0, h) }, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
                                         else
                                                 closeSF()
                                         end
@@ -3514,8 +3513,21 @@ UIAspectRatioConstraint.Parent = Slider
                                                 if callback then callback(value) end
                                         end
 
+                                        do
+                                                local vBtn = New("TextButton", { Size = UDim2.new(1,0,1,0), BackgroundTransparency = 1, Text = "", ZIndex = SliderValue.ZIndex + 2 }, SliderValue)
+                                                vBtn.MouseButton1Click:Connect(function()
+                                                        local box = New("TextBox", { Size = UDim2.new(1,0,1,0), BackgroundColor3 = Color3.fromRGB(18,22,34), BorderSizePixel = 0, Text = tostring(value), TextColor3 = Color3.fromRGB(255,255,255), TextScaled = true, Font = Enum.Font.SourceSansSemibold, ClearTextOnFocus = true, ZIndex = SliderValue.ZIndex + 3 }, SliderValue)
+                                                        New("UICorner", { CornerRadius = UDim.new(0,5) }, box)
+                                                        box:CaptureFocus()
+                                                        box.FocusLost:Connect(function()
+                                                                local n = tonumber(box.Text)
+                                                                if n then value = math.clamp(math.floor(n), min, max); local r = (value-min)/(max-min); Tween(InLine,{Size=UDim2.fromScale(r,1)},0.1); Trigger.Position=UDim2.new(r,0,-1.8,0); if callback then callback(value) end end
+                                                                SliderValue.Text = tostring(value)..suffix; box:Destroy()
+                                                        end)
+                                                end)
+                                        end
                                         Slider.InputBegan:Connect(function(input)
-                                                if input.UserInputType == Enum.UserInputType.Touch then
+                                                if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
                                                         dragging = true
                                                         update(input)
                                                 end
@@ -4628,8 +4640,21 @@ UIAspectRatioConstraint.Parent = Colorpicker
                                         if callback then callback(value) end
                                 end
 
+                                do
+                                        local vBtn = New("TextButton", { Size = UDim2.new(1,0,1,0), BackgroundTransparency = 1, Text = "", ZIndex = 10 }, SliderValue)
+                                        vBtn.MouseButton1Click:Connect(function()
+                                                local box = New("TextBox", { Size = UDim2.new(1,0,1,0), BackgroundColor3 = Color3.fromRGB(18,22,34), BorderSizePixel = 0, Text = tostring(value), TextColor3 = Color3.fromRGB(255,255,255), TextScaled = true, Font = Enum.Font.SourceSansSemibold, ClearTextOnFocus = true, ZIndex = 11 }, SliderValue)
+                                                New("UICorner", { CornerRadius = UDim.new(0,5) }, box)
+                                                box:CaptureFocus()
+                                                box.FocusLost:Connect(function()
+                                                        local n = tonumber(box.Text)
+                                                        if n then value = math.clamp(math.floor(n), min, max); local r = (value-min)/(max-min); Tween(InLine,{Size=UDim2.fromScale(r,1)},0.1); Trigger.Position=UDim2.new(r,0,-1.8,0); if callback then callback(value) end end
+                                                        SliderValue.Text = tostring(value)..suffix; box:Destroy()
+                                                end)
+                                        end)
+                                end
                                 Slider.InputBegan:Connect(function(input)
-                                        if input.UserInputType == Enum.UserInputType.Touch then
+                                        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
                                                 dragging = true
                                                 update(input)
                                         end
@@ -4668,6 +4693,91 @@ UIAspectRatioConstraint.Parent = Colorpicker
                                 function obj:Get() return value end
                                 function obj:AddSettings() return MakeSettings(Slider, "slider", text) end
                                 table.insert(_registeredElements, { key = "slider_" .. text, obj = obj })
+                                return obj
+                        end
+
+                        function SectionObj:AddKeybind(text, defaultKey, callback)
+                                elemCount = elemCount + 1
+                                local boundKey = defaultKey or Enum.KeyCode.Unknown
+                                local listening = false
+
+                                local Row = New("Frame", {
+                                        Name = "Keybind",
+                                        Size = UDim2.new(1, 0, 0.20000000298023224, 0),
+                                        BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+                                        BackgroundTransparency = 1,
+                                        LayoutOrder = elemCount,
+                                }, Elements)
+                                New("UIAspectRatioConstraint", { AspectRatio = 9, AspectType = Enum.AspectType.ScaleWithParentSize }, Row)
+
+                                New("Frame", {
+                                        Name = "Lines",
+                                        Position = UDim2.new(0.05, 0, 1, 0),
+                                        Size = UDim2.new(0.9, 0, 0, 1),
+                                        BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+                                        BackgroundTransparency = 0.9,
+                                        BorderSizePixel = 0,
+                                        ZIndex = 100,
+                                }, Row)
+
+                                New("TextLabel", {
+                                        Name = "TextToggle",
+                                        Position = UDim2.new(0.048, 0, 0.3, 0),
+                                        Size = UDim2.new(0.5, 0, 0.5, 0),
+                                        BackgroundTransparency = 1,
+                                        Text = text,
+                                        TextColor3 = Color3.fromRGB(255, 255, 255),
+                                        TextScaled = true,
+                                        Font = Enum.Font.SourceSansSemibold,
+                                        TextTransparency = 0.1,
+                                        TextXAlignment = Enum.TextXAlignment.Left,
+                                }, Row)
+
+                                local keyName = boundKey == Enum.KeyCode.Unknown and "None" or boundKey.Name
+                                local KeyBtn = New("TextButton", {
+                                        Name = "KeyBtn",
+                                        Position = UDim2.new(0.6, 0, 0.15, 0),
+                                        Size = UDim2.new(0.35, 0, 0.7, 0),
+                                        BackgroundColor3 = Color3.fromRGB(28, 32, 48),
+                                        BackgroundTransparency = 0.3,
+                                        Text = "[" .. keyName .. "]",
+                                        TextColor3 = mainColor,
+                                        TextScaled = true,
+                                        Font = Enum.Font.SourceSansSemibold,
+                                        ZIndex = 5,
+                                }, Row)
+                                New("UICorner", { CornerRadius = UDim.new(0, 6) }, KeyBtn)
+                                New("UIStroke", { Color = mainColor, Transparency = 0.6, Thickness = 1 }, KeyBtn)
+
+                                local function stopListen()
+                                        listening = false
+                                        KeyBtn.TextColor3 = mainColor
+                                        local n = boundKey == Enum.KeyCode.Unknown and "None" or boundKey.Name
+                                        KeyBtn.Text = "[" .. n .. "]"
+                                end
+
+                                KeyBtn.MouseButton1Click:Connect(function()
+                                        if listening then stopListen(); return end
+                                        listening = true
+                                        KeyBtn.Text = "..."
+                                        KeyBtn.TextColor3 = Color3.fromRGB(255, 200, 60)
+                                end)
+
+                                UserInputService.InputBegan:Connect(function(input, gp)
+                                        if not listening then return end
+                                        if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+                                        if input.KeyCode == Enum.KeyCode.Escape then
+                                                stopListen(); return
+                                        end
+                                        boundKey = input.KeyCode
+                                        stopListen()
+                                        if callback then callback(boundKey) end
+                                end)
+
+                                local obj = {}
+                                function obj:Set(key) boundKey = key; local n = key == Enum.KeyCode.Unknown and "None" or key.Name; KeyBtn.Text = "[" .. n .. "]" end
+                                function obj:Get() return boundKey end
+                                table.insert(_registeredElements, { key = "keybind_" .. text, obj = obj })
                                 return obj
                         end
 
@@ -4749,15 +4859,15 @@ UIAspectRatioConstraint.Parent = Colorpicker
 
                                 local DownBar = New("Frame", {
                                         Name = "DownBar",
-                                        Position = UDim2.new(0.56, 0, 0, 0),
-                                        Size = UDim2.new(0.5, 0, 0, 0),
+                                        Position = UDim2.new(0, 0, 1, 4),
+                                        Size = UDim2.new(1, 0, 0, 0),
                                         BackgroundColor3 = Color3.fromRGB(16,19,28),
                                         Visible = false,
                                         ZIndex = 300,
                                         ClipsDescendants = true,
                                 }, Dropdown)
-                                New("UICorner", {}, DownBar)
-                                New("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.98, Thickness = 5 }, DownBar)
+                                New("UICorner", { CornerRadius = UDim.new(0, 8) }, DownBar)
+                                New("UIStroke", { Color = Color3.fromRGB(60, 70, 100), Transparency = 0.6, Thickness = 1 }, DownBar)
 
                                 local Scrolls = New("ScrollingFrame", {
                                         Name = "Scrolls",
@@ -4777,42 +4887,55 @@ UIAspectRatioConstraint.Parent = Colorpicker
 
                                 local function closeDropdown()
                                         dropOpen = false
-                                        
-                                        Tween(DownBar, { Size = UDim2.new(0.5, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-                                        task.delay(0.21, function() DownBar.Visible = false end)
+                                        Tween(Arrow, { Rotation = 0 }, 0.2)
+                                        Tween(DownBar, { Size = UDim2.new(1, 0, 0, 0) }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+                                        task.delay(0.19, function() DownBar.Visible = false end)
                                         UnregisterPopup(DownBar)
                                         if _openDropdown == closeDropdown then _openDropdown = nil end
                                 end
 
+                                local selectedHighlights = {}
+                                local function updateHighlights()
+                                        for opt, btn in pairs(selectedHighlights) do
+                                                Tween(btn, { BackgroundTransparency = opt == selected and 0.7 or 1, TextTransparency = opt == selected and 0 or 0.25 }, 0.12)
+                                        end
+                                end
+
+                                New("UIPadding", { PaddingLeft = UDim.new(0,4), PaddingRight = UDim.new(0,4), PaddingTop = UDim.new(0,4), PaddingBottom = UDim.new(0,4) }, Scrolls)
+
                                 for _, opt in ipairs(options) do
                                         local Buttons = New("TextButton", {
                                                 Name = "Buttons",
-                                                Size = UDim2.new(1, 0, 0, 16),
-                                                BackgroundColor3 = Color3.fromRGB(32, 35, 50),
+                                                Size = UDim2.new(1, 0, 0, 26),
+                                                BackgroundColor3 = mainColor,
                                                 BackgroundTransparency = 1,
                                                 Text = opt,
-                                                TextColor3 = Color3.fromRGB(255, 255, 255),
+                                                TextColor3 = Color3.fromRGB(220, 220, 235),
                                                 TextScaled = true,
                                                 Font = Enum.Font.SourceSansSemibold,
-                                                TextTransparency = 0.20000000298023224,
+                                                TextTransparency = 0.25,
                                                 TextXAlignment = Enum.TextXAlignment.Left,
                                                 ZIndex = 302,
                                         }, Scrolls)
-                                        New("UICorner", { CornerRadius = UDim.new(0, 5) }, Buttons)
+                                        New("UICorner", { CornerRadius = UDim.new(0, 6) }, Buttons)
+                                        New("UIPadding", { PaddingLeft = UDim.new(0, 8) }, Buttons)
+                                        selectedHighlights[opt] = Buttons
 
                                         Buttons.MouseEnter:Connect(function()
-                                                Tween(Buttons, { BackgroundTransparency = 0.6 }, 0.1)
+                                                if selected ~= opt then Tween(Buttons, { BackgroundTransparency = 0.85 }, 0.1) end
                                         end)
                                         Buttons.MouseLeave:Connect(function()
-                                                Tween(Buttons, { BackgroundTransparency = selected == opt and 0.5 or 1 }, 0.1)
+                                                Tween(Buttons, { BackgroundTransparency = selected == opt and 0.7 or 1, TextTransparency = selected == opt and 0 or 0.25 }, 0.1)
                                         end)
                                         Buttons.MouseButton1Click:Connect(function()
                                                 selected = opt
                                                 TopBar.Text = opt
+                                                updateHighlights()
                                                 if callback then callback(opt) end
                                                 closeDropdown()
                                         end)
                                 end
+                                updateHighlights()
 
                                 TopBar.MouseButton1Click:Connect(function()
                                         if dropOpen then
@@ -4823,10 +4946,10 @@ UIAspectRatioConstraint.Parent = Colorpicker
                                                 dropOpen = true
                                                 _openDropdown = closeDropdown
                                                 DownBar.Visible = true
-                                                DownBar.Size = UDim2.new(0.5, 0, 0, 0)
-                                                local h = math.min(#options * 24, 96)
-                                                Tween(DownBar, { Size = UDim2.new(0.5, 0, 0, h) }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-                                                
+                                                DownBar.Size = UDim2.new(1, 0, 0, 0)
+                                                local h = math.min(#options * 30 + 8, 130)
+                                                Tween(Arrow, { Rotation = 180 }, 0.2)
+                                                Tween(DownBar, { Size = UDim2.new(1, 0, 0, h) }, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
                                                 RegisterPopup(DownBar, closeDropdown)
                                         end
                                 end)
@@ -6205,8 +6328,21 @@ UIAspectRatioConstraint.Parent = Slider
                                                 if callback then callback(value) end
                                         end
 
+                                        do
+                                                local vBtn = New("TextButton", { Size = UDim2.new(1,0,1,0), BackgroundTransparency = 1, Text = "", ZIndex = SliderValue.ZIndex + 2 }, SliderValue)
+                                                vBtn.MouseButton1Click:Connect(function()
+                                                        local box = New("TextBox", { Size = UDim2.new(1,0,1,0), BackgroundColor3 = Color3.fromRGB(18,22,34), BorderSizePixel = 0, Text = tostring(value), TextColor3 = Color3.fromRGB(255,255,255), TextScaled = true, Font = Enum.Font.SourceSansSemibold, ClearTextOnFocus = true, ZIndex = SliderValue.ZIndex + 3 }, SliderValue)
+                                                        New("UICorner", { CornerRadius = UDim.new(0,5) }, box)
+                                                        box:CaptureFocus()
+                                                        box.FocusLost:Connect(function()
+                                                                local n = tonumber(box.Text)
+                                                                if n then value = math.clamp(math.floor(n), min, max); local r = (value-min)/(max-min); Tween(InLine,{Size=UDim2.fromScale(r,1)},0.1); Trigger.Position=UDim2.new(r,0,-1.8,0); if callback then callback(value) end end
+                                                                SliderValue.Text = tostring(value)..suffix; box:Destroy()
+                                                        end)
+                                                end)
+                                        end
                                         Slider.InputBegan:Connect(function(input)
-                                                if input.UserInputType == Enum.UserInputType.Touch then
+                                                if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
                                                         dragging = true
                                                         update(input)
                                                 end
