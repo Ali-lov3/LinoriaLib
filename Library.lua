@@ -3502,6 +3502,13 @@ UIAspectRatioConstraint.Parent = Slider
 						if callback then callback(value) end
 					end
 
+					Slider.InputBegan:Connect(function(input)
+						if input.UserInputType == Enum.UserInputType.Touch then
+							input:Cancel()
+							dragging = true
+							update(input)
+						end
+					end)
 					Line.InputBegan:Connect(function(input)
 						if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 							if input.UserInputType == Enum.UserInputType.Touch then input:Cancel() end
@@ -4610,6 +4617,13 @@ UIAspectRatioConstraint.Parent = Colorpicker
 					if callback then callback(value) end
 				end
 
+				Slider.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.Touch then
+						input:Cancel()
+						dragging = true
+						update(input)
+					end
+				end)
 				Line.InputBegan:Connect(function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 						if input.UserInputType == Enum.UserInputType.Touch then input:Cancel() end
@@ -6181,6 +6195,13 @@ UIAspectRatioConstraint.Parent = Slider
 						if callback then callback(value) end
 					end
 
+					Slider.InputBegan:Connect(function(input)
+						if input.UserInputType == Enum.UserInputType.Touch then
+							input:Cancel()
+							dragging = true
+							update(input)
+						end
+					end)
 					Line.InputBegan:Connect(function(input)
 						if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 							if input.UserInputType == Enum.UserInputType.Touch then input:Cancel() end
