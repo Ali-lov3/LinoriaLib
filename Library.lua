@@ -1749,6 +1749,16 @@ UIAspectRatioConstraint.Parent = ImageLabel
         }, MainFrame)
         New("UICorner", {}, Frame2)
 
+        -- Global popup layer: full-screen overlay on MainFrame, never clips
+        local PopupLayer = New("Frame", {
+                Name = "PopupLayer",
+                Size = UDim2.new(1, 0, 1, 0),
+                BackgroundTransparency = 1,
+                ZIndex = 2000,
+                ClipsDescendants = false,
+                Active = false,
+        }, MainFrame)
+
         local Header = New("Frame", {
                 Name = "Header",
                 Size = UDim2.new(1, 0, 0.09, 0),
@@ -2981,11 +2991,14 @@ New("UIAspectRatioConstraint", {
                         BackgroundTransparency = 1,
                         LayoutOrder = 1,
                         ScrollingDirection = Enum.ScrollingDirection.Y,
+                        ScrollingEnabled = true,
+                        ElasticBehavior = Enum.ElasticBehavior.Always,
                         AutomaticCanvasSize = Enum.AutomaticSize.Y,
                         CanvasSize = UDim2.new(0, 0, 0, 0),
-                        ScrollBarThickness = 2,
-                        ScrollBarImageColor3 = Color3.fromRGB(80, 80, 100),
+                        ScrollBarThickness = 3,
+                        ScrollBarImageColor3 = Color3.fromRGB(100, 110, 160),
                         ClipsDescendants = true,
+                        Active = true,
                 }, TabHose)
                 New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.LayoutOrder }, Left)
 New("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.LayoutOrder }, Right)
@@ -4857,15 +4870,16 @@ UIAspectRatioConstraint.Parent = Colorpicker
                                         ZIndex = 7,
                                 }, TopBar)
 
+                                -- DownBar lives on PopupLayer so ClipsDescendants on Left/Right never clips it
                                 local DownBar = New("Frame", {
                                         Name = "DownBar",
-                                        Position = UDim2.new(0, 0, 1, 4),
-                                        Size = UDim2.new(1, 0, 0, 0),
+                                        Position = UDim2.fromOffset(0, 0),
+                                        Size = UDim2.fromOffset(0, 0),
                                         BackgroundColor3 = Color3.fromRGB(16,19,28),
                                         Visible = false,
-                                        ZIndex = 300,
+                                        ZIndex = 2001,
                                         ClipsDescendants = true,
-                                }, Dropdown)
+                                }, PopupLayer)
                                 New("UICorner", { CornerRadius = UDim.new(0, 8) }, DownBar)
                                 New("UIStroke", { Color = Color3.fromRGB(60, 70, 100), Transparency = 0.6, Thickness = 1 }, DownBar)
 
@@ -4875,20 +4889,21 @@ UIAspectRatioConstraint.Parent = Colorpicker
                                         BackgroundColor3 = Color3.fromRGB(162, 162, 162),
                                         BackgroundTransparency = 1,
                                         BorderSizePixel = 0,
-                                        ScrollBarThickness = 1,
-                                        ZIndex = 301,
+                                        ScrollBarThickness = 2,
+                                        ZIndex = 2002,
                                 }, DownBar)
                                 New("UIListLayout", {
                                         Padding = UDim.new(0, 2),
                                         SortOrder = Enum.SortOrder.LayoutOrder,
                                 }, Scrolls)
 
-                                Scrolls.CanvasSize = UDim2.new(0, 0, 0, #options * 24)
+                                Scrolls.CanvasSize = UDim2.new(0, 0, 0, #options * 30 + 8)
 
                                 local function closeDropdown()
                                         dropOpen = false
                                         Tween(Arrow, { Rotation = 0 }, 0.2)
-                                        Tween(DownBar, { Size = UDim2.new(1, 0, 0, 0) }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+                                        local cw = DownBar.AbsoluteSize.X
+                                        Tween(DownBar, { Size = UDim2.fromOffset(cw, 0) }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
                                         task.delay(0.19, function() DownBar.Visible = false end)
                                         UnregisterPopup(DownBar)
                                         if _openDropdown == closeDropdown then _openDropdown = nil end
@@ -4945,11 +4960,21 @@ UIAspectRatioConstraint.Parent = Colorpicker
                                                 if _openDropdown then _openDropdown() end
                                                 dropOpen = true
                                                 _openDropdown = closeDropdown
-                                                DownBar.Visible = true
-                                                DownBar.Size = UDim2.new(1, 0, 0, 0)
+                                                -- Absolute positioning on PopupLayer
+                                                local abs = TopBar.AbsolutePosition
+                                                local asz = TopBar.AbsoluteSize
+                                                local lpos = PopupLayer.AbsolutePosition
+                                                local pw = asz.X
                                                 local h = math.min(#options * 30 + 8, 130)
+                                                local px = abs.X - lpos.X
+                                                local py = abs.Y + asz.Y - lpos.Y + 4
+                                                -- clamp so it doesn't go off-screen right
+                                                if px + pw > PopupLayer.AbsoluteSize.X then px = PopupLayer.AbsoluteSize.X - pw end
+                                                DownBar.Position = UDim2.fromOffset(px, py)
+                                                DownBar.Size = UDim2.fromOffset(pw, 0)
+                                                DownBar.Visible = true
                                                 Tween(Arrow, { Rotation = 180 }, 0.2)
-                                                Tween(DownBar, { Size = UDim2.new(1, 0, 0, h) }, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                                                Tween(DownBar, { Size = UDim2.fromOffset(pw, h) }, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
                                                 RegisterPopup(DownBar, closeDropdown)
                                         end
                                 end)
@@ -4960,6 +4985,386 @@ UIAspectRatioConstraint.Parent = Colorpicker
                                 function obj:AddSettings() return MakeSettings(Dropdown, "dropdown", text) end
                                 
                                 table.insert(_registeredElements, { key = "dropdown_" .. text, obj = obj })
+                                if default ~= nil then obj:Set(default, true) end
+                                return obj
+                        end
+
+                        function SectionObj:AddMultiDropdown(text, options, defaults, callback)
+                                elemCount = elemCount + 1
+                                local selected = {}
+                                for _, v in ipairs(defaults or {}) do selected[v] = true end
+                                local dropOpen = false
+
+                                local Dropdown = New("Frame", {
+                                        Name = "MultiDropdown",
+                                        Size = UDim2.new(1, 0, 0.20000000298023224, 0),
+                                        BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+                                        BackgroundTransparency = 1,
+                                        LayoutOrder = elemCount,
+                                        ClipsDescendants = false,
+                                }, Elements)
+                                New("UIAspectRatioConstraint", { AspectRatio = 9, AspectType = Enum.AspectType.ScaleWithParentSize }, Dropdown)
+
+                                New("Frame", { Name="Lines", Position=UDim2.new(0.05,0,1,0), Size=UDim2.new(0.9,0,0,1), BackgroundColor3=Color3.fromRGB(162,162,162), BackgroundTransparency=0.9, BorderSizePixel=0, ZIndex=100 }, Dropdown)
+
+                                local function getLabel()
+                                        local sel = {}
+                                        for k,v in pairs(selected) do if v then sel[#sel+1]=k end end
+                                        if #sel == 0 then return text end
+                                        if #sel == 1 then return sel[1] end
+                                        return #sel .. " ausgewählt"
+                                end
+
+                                local TopBar = New("TextButton", {
+                                        Name = "TopBar",
+                                        Position = UDim2.new(0.05, 0, 0.1, 0),
+                                        Size = UDim2.new(0.9, 0, 0.8, 0),
+                                        BackgroundColor3 = Color3.fromRGB(20, 23, 36),
+                                        BackgroundTransparency = 0.4,
+                                        Text = getLabel(),
+                                        TextColor3 = Color3.fromRGB(200, 200, 220),
+                                        TextScaled = true,
+                                        Font = Enum.Font.SourceSansSemibold,
+                                        TextXAlignment = Enum.TextXAlignment.Left,
+                                        ZIndex = 5,
+                                }, Dropdown)
+                                New("UICorner", { CornerRadius = UDim.new(0, 6) }, TopBar)
+                                New("UIStroke", { Color = mainColor, Transparency = 0.7, Thickness = 1 }, TopBar)
+                                New("UIPadding", { PaddingLeft = UDim.new(0, 8) }, TopBar)
+
+                                local Arrow = New("ImageLabel", {
+                                        AnchorPoint = Vector2.new(1, 0.5),
+                                        Position = UDim2.new(1, -6, 0.5, 0),
+                                        Size = UDim2.new(0, 14, 0, 14),
+                                        BackgroundTransparency = 1,
+                                        Image = "rbxassetid://10709790948",
+                                        ImageColor3 = Color3.fromRGB(180, 190, 220),
+                                        ScaleType = Enum.ScaleType.Fit,
+                                        Rotation = -90,
+                                        ZIndex = 7,
+                                }, TopBar)
+
+                                local DownBar = New("Frame", {
+                                        Name = "MultiDownBar",
+                                        Position = UDim2.fromOffset(0, 0),
+                                        Size = UDim2.fromOffset(0, 0),
+                                        BackgroundColor3 = Color3.fromRGB(16, 19, 28),
+                                        Visible = false,
+                                        ZIndex = 2001,
+                                        ClipsDescendants = true,
+                                }, PopupLayer)
+                                New("UICorner", { CornerRadius = UDim.new(0, 8) }, DownBar)
+                                New("UIStroke", { Color = Color3.fromRGB(60, 70, 100), Transparency = 0.6, Thickness = 1 }, DownBar)
+
+                                local Scrolls = New("ScrollingFrame", {
+                                        Size = UDim2.new(1, 0, 1, 0),
+                                        BackgroundTransparency = 1,
+                                        BorderSizePixel = 0,
+                                        ScrollBarThickness = 2,
+                                        ZIndex = 2002,
+                                }, DownBar)
+                                New("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, Scrolls)
+                                New("UIPadding", { PaddingLeft=UDim.new(0,4), PaddingRight=UDim.new(0,4), PaddingTop=UDim.new(0,4), PaddingBottom=UDim.new(0,4) }, Scrolls)
+                                Scrolls.CanvasSize = UDim2.new(0, 0, 0, #options * 30 + 8)
+
+                                local function closeMulti()
+                                        dropOpen = false
+                                        Tween(Arrow, { Rotation = -90 }, 0.2)
+                                        local cw = DownBar.AbsoluteSize.X
+                                        Tween(DownBar, { Size = UDim2.fromOffset(cw, 0) }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+                                        task.delay(0.19, function() DownBar.Visible = false end)
+                                        UnregisterPopup(DownBar)
+                                        if _openDropdown == closeMulti then _openDropdown = nil end
+                                end
+
+                                local btnRefs = {}
+                                local function refreshButtons()
+                                        TopBar.Text = getLabel()
+                                        for opt, btn in pairs(btnRefs) do
+                                                local on = selected[opt] == true
+                                                Tween(btn, { BackgroundTransparency = on and 0.6 or 1, TextTransparency = on and 0 or 0.3 }, 0.1)
+                                        end
+                                end
+
+                                for _, opt in ipairs(options) do
+                                        local Btn = New("TextButton", {
+                                                Size = UDim2.new(1, 0, 0, 26),
+                                                BackgroundColor3 = mainColor,
+                                                BackgroundTransparency = selected[opt] and 0.6 or 1,
+                                                Text = opt,
+                                                TextColor3 = Color3.fromRGB(220, 220, 235),
+                                                TextScaled = true,
+                                                Font = Enum.Font.SourceSansSemibold,
+                                                TextTransparency = selected[opt] and 0 or 0.3,
+                                                TextXAlignment = Enum.TextXAlignment.Left,
+                                                ZIndex = 2002,
+                                        }, Scrolls)
+                                        New("UICorner", { CornerRadius = UDim.new(0, 6) }, Btn)
+                                        New("UIPadding", { PaddingLeft = UDim.new(0, 8) }, Btn)
+                                        btnRefs[opt] = Btn
+
+                                        -- Checkmark label on right
+                                        local Chk = New("TextLabel", {
+                                                AnchorPoint = Vector2.new(1, 0.5),
+                                                Position = UDim2.new(1, -8, 0.5, 0),
+                                                Size = UDim2.new(0, 16, 0, 16),
+                                                BackgroundTransparency = 1,
+                                                Text = selected[opt] and "✓" or "",
+                                                TextColor3 = mainColor,
+                                                TextScaled = true,
+                                                Font = Enum.Font.SourceSansBold,
+                                                ZIndex = 2003,
+                                        }, Btn)
+                                        btnRefs["chk_"..opt] = Chk
+
+                                        Btn.MouseButton1Click:Connect(function()
+                                                selected[opt] = not selected[opt]
+                                                Chk.Text = selected[opt] and "✓" or ""
+                                                refreshButtons()
+                                                local result = {}
+                                                for k,v in pairs(selected) do if v then result[#result+1]=k end end
+                                                if callback then callback(result) end
+                                        end)
+                                end
+
+                                TopBar.MouseButton1Click:Connect(function()
+                                        if dropOpen then
+                                                closeMulti()
+                                        else
+                                                CloseAllPopupsExcept(DownBar)
+                                                if _openDropdown then _openDropdown() end
+                                                dropOpen = true
+                                                _openDropdown = closeMulti
+                                                local abs = TopBar.AbsolutePosition
+                                                local asz = TopBar.AbsoluteSize
+                                                local lpos = PopupLayer.AbsolutePosition
+                                                local pw = asz.X
+                                                local h = math.min(#options * 30 + 8, 150)
+                                                local px = abs.X - lpos.X
+                                                local py = abs.Y + asz.Y - lpos.Y + 4
+                                                if px + pw > PopupLayer.AbsoluteSize.X then px = PopupLayer.AbsoluteSize.X - pw end
+                                                DownBar.Position = UDim2.fromOffset(px, py)
+                                                DownBar.Size = UDim2.fromOffset(pw, 0)
+                                                DownBar.Visible = true
+                                                Tween(Arrow, { Rotation = 90 }, 0.2)
+                                                Tween(DownBar, { Size = UDim2.fromOffset(pw, h) }, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                                                RegisterPopup(DownBar, closeMulti)
+                                        end
+                                end)
+
+                                local obj = {}
+                                function obj:Get()
+                                        local r = {}
+                                        for k,v in pairs(selected) do if v then r[#r+1]=k end end
+                                        return r
+                                end
+                                function obj:Set(tbl, silent)
+                                        selected = {}
+                                        for _,v in ipairs(tbl) do selected[v]=true end
+                                        refreshButtons()
+                                        if not silent and callback then callback(obj:Get()) end
+                                end
+                                table.insert(_registeredElements, { key = "multidropdown_" .. text, obj = obj })
+                                return obj
+                        end
+
+                        function SectionObj:AddSearchDropdown(text, options, default, callback)
+                                elemCount = elemCount + 1
+                                local selected = default
+                                local dropOpen = false
+                                local filteredOpts = {}
+                                for _,v in ipairs(options) do filteredOpts[#filteredOpts+1] = v end
+
+                                local Dropdown = New("Frame", {
+                                        Name = "SearchDropdown",
+                                        Size = UDim2.new(1, 0, 0.20000000298023224, 0),
+                                        BackgroundColor3 = Color3.fromRGB(162, 162, 162),
+                                        BackgroundTransparency = 1,
+                                        LayoutOrder = elemCount,
+                                        ClipsDescendants = false,
+                                }, Elements)
+                                New("UIAspectRatioConstraint", { AspectRatio = 9, AspectType = Enum.AspectType.ScaleWithParentSize }, Dropdown)
+                                New("Frame", { Name="Lines", Position=UDim2.new(0.05,0,1,0), Size=UDim2.new(0.9,0,0,1), BackgroundColor3=Color3.fromRGB(162,162,162), BackgroundTransparency=0.9, BorderSizePixel=0, ZIndex=100 }, Dropdown)
+
+                                local TopBar = New("TextButton", {
+                                        Name = "TopBar",
+                                        Position = UDim2.new(0.05, 0, 0.1, 0),
+                                        Size = UDim2.new(0.9, 0, 0.8, 0),
+                                        BackgroundColor3 = Color3.fromRGB(20, 23, 36),
+                                        BackgroundTransparency = 0.4,
+                                        Text = selected or text,
+                                        TextColor3 = Color3.fromRGB(200, 200, 220),
+                                        TextScaled = true,
+                                        Font = Enum.Font.SourceSansSemibold,
+                                        TextXAlignment = Enum.TextXAlignment.Left,
+                                        ZIndex = 5,
+                                }, Dropdown)
+                                New("UICorner", { CornerRadius = UDim.new(0, 6) }, TopBar)
+                                New("UIStroke", { Color = mainColor, Transparency = 0.7, Thickness = 1 }, TopBar)
+                                New("UIPadding", { PaddingLeft = UDim.new(0, 8) }, TopBar)
+
+                                local Arrow = New("ImageLabel", {
+                                        AnchorPoint = Vector2.new(1, 0.5),
+                                        Position = UDim2.new(1, -6, 0.5, 0),
+                                        Size = UDim2.new(0, 14, 0, 14),
+                                        BackgroundTransparency = 1,
+                                        Image = "rbxassetid://10709790948",
+                                        ImageColor3 = Color3.fromRGB(180, 190, 220),
+                                        ScaleType = Enum.ScaleType.Fit,
+                                        Rotation = -90,
+                                        ZIndex = 7,
+                                }, TopBar)
+
+                                local DownBar = New("Frame", {
+                                        Name = "SearchDownBar",
+                                        Position = UDim2.fromOffset(0, 0),
+                                        Size = UDim2.fromOffset(0, 0),
+                                        BackgroundColor3 = Color3.fromRGB(16, 19, 28),
+                                        Visible = false,
+                                        ZIndex = 2001,
+                                        ClipsDescendants = true,
+                                }, PopupLayer)
+                                New("UICorner", { CornerRadius = UDim.new(0, 8) }, DownBar)
+                                New("UIStroke", { Color = Color3.fromRGB(60, 70, 100), Transparency = 0.6, Thickness = 1 }, DownBar)
+
+                                -- Search box at top of popup
+                                local SearchBox = New("TextBox", {
+                                        Name = "SearchBox",
+                                        Position = UDim2.new(0, 6, 0, 5),
+                                        Size = UDim2.new(1, -12, 0, 22),
+                                        BackgroundColor3 = Color3.fromRGB(25, 28, 42),
+                                        BackgroundTransparency = 0.2,
+                                        PlaceholderText = "Suchen...",
+                                        PlaceholderColor3 = Color3.fromRGB(130, 140, 170),
+                                        Text = "",
+                                        TextColor3 = Color3.fromRGB(220, 220, 240),
+                                        TextScaled = true,
+                                        Font = Enum.Font.SourceSans,
+                                        ClearTextOnFocus = false,
+                                        ZIndex = 2003,
+                                }, DownBar)
+                                New("UICorner", { CornerRadius = UDim.new(0, 5) }, SearchBox)
+                                New("UIStroke", { Color = mainColor, Transparency = 0.6, Thickness = 1 }, SearchBox)
+                                New("UIPadding", { PaddingLeft = UDim.new(0, 6) }, SearchBox)
+
+                                local Scrolls = New("ScrollingFrame", {
+                                        Position = UDim2.new(0, 0, 0, 31),
+                                        Size = UDim2.new(1, 0, 1, -31),
+                                        BackgroundTransparency = 1,
+                                        BorderSizePixel = 0,
+                                        ScrollBarThickness = 2,
+                                        ZIndex = 2002,
+                                }, DownBar)
+                                local ListLayout = New("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, Scrolls)
+                                New("UIPadding", { PaddingLeft=UDim.new(0,4), PaddingRight=UDim.new(0,4), PaddingTop=UDim.new(0,2), PaddingBottom=UDim.new(0,4) }, Scrolls)
+
+                                local btnPool = {}
+                                local selectedHighlights = {}
+
+                                local function rebuildList(filter)
+                                        for _, b in ipairs(btnPool) do b.Parent = nil end
+                                        btnPool = {}
+                                        selectedHighlights = {}
+                                        filteredOpts = {}
+                                        local fl = filter and filter:lower() or ""
+                                        for _, opt in ipairs(options) do
+                                                if fl == "" or opt:lower():find(fl, 1, true) then
+                                                        filteredOpts[#filteredOpts+1] = opt
+                                                end
+                                        end
+                                        Scrolls.CanvasSize = UDim2.new(0, 0, 0, #filteredOpts * 30 + 4)
+                                        for _, opt in ipairs(filteredOpts) do
+                                                local Btn = New("TextButton", {
+                                                        Size = UDim2.new(1, 0, 0, 26),
+                                                        BackgroundColor3 = mainColor,
+                                                        BackgroundTransparency = opt == selected and 0.6 or 1,
+                                                        Text = opt,
+                                                        TextColor3 = Color3.fromRGB(220, 220, 235),
+                                                        TextScaled = true,
+                                                        Font = Enum.Font.SourceSansSemibold,
+                                                        TextTransparency = opt == selected and 0 or 0.25,
+                                                        TextXAlignment = Enum.TextXAlignment.Left,
+                                                        ZIndex = 2002,
+                                                }, Scrolls)
+                                                New("UICorner", { CornerRadius = UDim.new(0, 6) }, Btn)
+                                                New("UIPadding", { PaddingLeft = UDim.new(0, 8) }, Btn)
+                                                btnPool[#btnPool+1] = Btn
+                                                selectedHighlights[opt] = Btn
+                                                Btn.MouseButton1Click:Connect(function()
+                                                        selected = opt
+                                                        TopBar.Text = opt
+                                                        for o2, b2 in pairs(selectedHighlights) do
+                                                                Tween(b2, { BackgroundTransparency = o2==selected and 0.6 or 1, TextTransparency = o2==selected and 0 or 0.25 }, 0.1)
+                                                        end
+                                                        if callback then callback(opt) end
+                                                        -- close
+                                                        dropOpen = false
+                                                        Tween(Arrow, { Rotation = -90 }, 0.2)
+                                                        local cw = DownBar.AbsoluteSize.X
+                                                        Tween(DownBar, { Size = UDim2.fromOffset(cw, 0) }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+                                                        task.delay(0.19, function() DownBar.Visible = false end)
+                                                        UnregisterPopup(DownBar)
+                                                        if _openDropdown == closeSearch then _openDropdown = nil end
+                                                end)
+                                        end
+                                end
+
+                                local function closeSearch()
+                                        dropOpen = false
+                                        Tween(Arrow, { Rotation = -90 }, 0.2)
+                                        local cw = DownBar.AbsoluteSize.X
+                                        Tween(DownBar, { Size = UDim2.fromOffset(cw, 0) }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+                                        task.delay(0.19, function() DownBar.Visible = false; SearchBox.Text = "" end)
+                                        UnregisterPopup(DownBar)
+                                        if _openDropdown == closeSearch then _openDropdown = nil end
+                                end
+
+                                SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+                                        rebuildList(SearchBox.Text)
+                                end)
+
+                                rebuildList("")
+
+                                TopBar.MouseButton1Click:Connect(function()
+                                        if dropOpen then
+                                                closeSearch()
+                                        else
+                                                CloseAllPopupsExcept(DownBar)
+                                                if _openDropdown then _openDropdown() end
+                                                dropOpen = true
+                                                _openDropdown = closeSearch
+                                                rebuildList("")
+                                                SearchBox.Text = ""
+                                                local abs = TopBar.AbsolutePosition
+                                                local asz = TopBar.AbsoluteSize
+                                                local lpos = PopupLayer.AbsolutePosition
+                                                local pw = asz.X
+                                                local h = math.min(#options * 30 + 8 + 31, 165)
+                                                local px = abs.X - lpos.X
+                                                local py = abs.Y + asz.Y - lpos.Y + 4
+                                                if px + pw > PopupLayer.AbsoluteSize.X then px = PopupLayer.AbsoluteSize.X - pw end
+                                                DownBar.Position = UDim2.fromOffset(px, py)
+                                                DownBar.Size = UDim2.fromOffset(pw, 0)
+                                                DownBar.Visible = true
+                                                Tween(Arrow, { Rotation = 90 }, 0.2)
+                                                Tween(DownBar, { Size = UDim2.fromOffset(pw, h) }, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                                                RegisterPopup(DownBar, closeSearch)
+                                                task.delay(0.05, function() SearchBox:CaptureFocus() end)
+                                        end
+                                end)
+
+                                local obj = {}
+                                function obj:Get() return selected end
+                                function obj:Set(val, silent)
+                                        selected = val
+                                        TopBar.Text = val
+                                        if not silent and callback then callback(val) end
+                                end
+                                function obj:SetOptions(newOpts)
+                                        options = newOpts
+                                        rebuildList(SearchBox.Text)
+                                end
+                                table.insert(_registeredElements, { key = "searchdropdown_" .. text, obj = obj })
                                 if default ~= nil then obj:Set(default, true) end
                                 return obj
                         end
@@ -5418,19 +5823,19 @@ UIAspectRatioConstraint.Parent = Colorpicker
                                 }, Colorpicker)
                                 New("UICorner", { CornerRadius = UDim.new(0, 6) }, colorpickerButton)
 
+                                -- colorpickerFrame lives on PopupLayer so it's never clipped
                                 local colorpickerFrame = New("Frame", {
                                         Name = "colorpickerFrame",
-                                        Position = UDim2.new(1.1, 0, 0, 0),
-                                        Size = UDim2.new(1, 0, 7, 0),
+                                        Position = UDim2.fromOffset(0, 0),
+                                        Size = UDim2.fromOffset(195, 180),
                                         BackgroundColor3 = Color3.fromRGB(15,17,26),
                                         BorderSizePixel = 0,
                                         Visible = false,
-                                        ZIndex = 350,
+                                        ZIndex = 2001,
                                         ClipsDescendants = false,
-                                }, Colorpicker)
-                                New("UICorner", { CornerRadius = UDim.new(0, 6) }, colorpickerFrame)
-                                New("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.92, Thickness = 1 }, colorpickerFrame)
-                                New("UIAspectRatioConstraint", { AspectRatio = 1.1 }, colorpickerFrame)
+                                }, PopupLayer)
+                                New("UICorner", { CornerRadius = UDim.new(0, 8) }, colorpickerFrame)
+                                New("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.88, Thickness = 1 }, colorpickerFrame)
 
                                 local RGB = New("ImageButton", {
                                         Name = "RGB",
@@ -5561,11 +5966,28 @@ UIAspectRatioConstraint.Parent = Colorpicker
                                         update()
                                 end
 
+                                local function openColorpicker()
+                                        -- Position near the colorpickerButton using absolute coords
+                                        local bpos = colorpickerButton.AbsolutePosition
+                                        local bsz  = colorpickerButton.AbsoluteSize
+                                        local lpos = PopupLayer.AbsolutePosition
+                                        local lsz  = PopupLayer.AbsoluteSize
+                                        local fw, fh = 195, 180
+                                        -- prefer opening above-left of the button
+                                        local px = bpos.X - lpos.X - fw + bsz.X
+                                        local py = bpos.Y - lpos.Y - fh - 6
+                                        if py < 0 then py = bpos.Y - lpos.Y + bsz.Y + 6 end
+                                        if px < 0 then px = 0 end
+                                        if px + fw > lsz.X then px = lsz.X - fw end
+                                        colorpickerFrame.Position = UDim2.fromOffset(px, py)
+                                        colorpickerFrame.Visible = true
+                                end
+
                                 colorpickerButton.MouseButton1Click:Connect(function()
                                         pickerOpen = not pickerOpen
                                         if pickerOpen then
                                                 CloseAllPopupsExcept(colorpickerFrame)
-                                                colorpickerFrame.Visible = true
+                                                openColorpicker()
                                                 RegisterPopup(colorpickerFrame, function()
                                                         pickerOpen = false
                                                         UnregisterPopup(colorpickerFrame)
@@ -5575,7 +5997,6 @@ UIAspectRatioConstraint.Parent = Colorpicker
                                                 UnregisterPopup(colorpickerFrame)
                                                 colorpickerFrame.Visible = false
                                         end
-                                        Tween(colorpickerLabel, { TextColor3 = pickerOpen and Color3.fromRGB(255,255,255) or Color3.fromRGB(255,255,255) }, 0.06)
                                 end)
 
                                 RGB.MouseButton1Down:Connect(function() WheelDown = true; UpdateRing() end)
