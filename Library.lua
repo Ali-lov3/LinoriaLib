@@ -4763,6 +4763,125 @@ do
         table.insert(Library.DependencyGroupboxes, DepGroupbox)
         return DepGroupbox
     end
+    function BaseGroupboxFuncs:AddESPPreview(Info)
+        Info = Info or {}
+        local Groupbox = self
+        local Container = Groupbox.Container
+        local ESPPreview = {
+            Type        = "ESPPreview",
+            Username    = tostring(Info.Username or "Username"),
+            Weapon      = tostring(Info.Weapon   or "Weapon"),
+            BoxColor    = Info.BoxColor  or Library.AccentColor,
+            BodyColor   = Info.BodyColor or Color3.fromRGB(170, 150, 50),
+            ShowUsername = Info.ShowUsername ~= false,
+            ShowWeapon   = Info.ShowWeapon   ~= false,
+        }
+        local PH = 192
+        local Holder = Library:Create("Frame", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, -4, 0, PH),
+            ZIndex = 5,
+            Parent = Container,
+        })
+        local BoxOuter = Library:Create("Frame", {
+            BackgroundColor3 = Color3.new(0, 0, 0),
+            BorderColor3     = Color3.new(0, 0, 0),
+            AnchorPoint      = Vector2.new(0.5, 0),
+            Position         = UDim2.new(0.5, 0, 0, 0),
+            Size             = UDim2.new(0, 138, 0, PH),
+            ZIndex           = 5,
+            Parent           = Holder,
+        })
+        local BoxInner = Library:Create("Frame", {
+            BackgroundColor3 = Library.BackgroundColor,
+            BorderColor3     = ESPPreview.BoxColor,
+            BorderMode       = Enum.BorderMode.Inset,
+            Size             = UDim2.new(1, 0, 1, 0),
+            ZIndex           = 6,
+            Parent           = BoxOuter,
+        })
+        Library:AddToRegistry(BoxInner, { BackgroundColor3 = "BackgroundColor" }, true)
+        local UsernameLabel = Library:CreateLabel({
+            AnchorPoint      = Vector2.new(0.5, 0),
+            Position         = UDim2.new(0.5, 0, 0, 4),
+            Size             = UDim2.new(1, -4, 0, 14),
+            Text             = ESPPreview.Username,
+            TextSize         = 13,
+            TextXAlignment   = Enum.TextXAlignment.Center,
+            Visible          = ESPPreview.ShowUsername,
+            ZIndex           = 7,
+            Parent           = BoxInner,
+        })
+        local BodyFrame = Library:Create("Frame", {
+            BackgroundTransparency = 1,
+            AnchorPoint            = Vector2.new(0.5, 0.5),
+            Position               = UDim2.new(0.5, 0, 0.5, 0),
+            Size                   = UDim2.new(0, 110, 0, 132),
+            ZIndex                 = 7,
+            Parent                 = BoxInner,
+        })
+        local BC = ESPPreview.BodyColor
+        local function Part(ax, ay, px, py, sx, sy)
+            return Library:Create("Frame", {
+                BackgroundColor3 = BC,
+                BorderSizePixel  = 1,
+                BorderColor3     = Color3.fromRGB(0, 0, 0),
+                AnchorPoint      = Vector2.new(ax, ay),
+                Position         = UDim2.new(0.5, px, 0, py),
+                Size             = UDim2.new(0, sx, 0, sy),
+                ZIndex           = 8,
+                Parent           = BodyFrame,
+            })
+        end
+        local Head     = Part(0.5, 0,   0,    0,  30,  28)
+        local Torso    = Part(0.5, 0,   0,   30,  58,  52)
+        local LeftArm  = Part(1,   0,  -29,  30,  26,  52)
+        local RightArm = Part(0,   0,   29,  30,  26,  52)
+        local LeftLeg  = Part(1,   0,  -2,   84,  26,  48)
+        local RightLeg = Part(0,   0,   2,   84,  26,  48)
+        local WeaponLabel = Library:CreateLabel({
+            AnchorPoint    = Vector2.new(0.5, 1),
+            Position       = UDim2.new(0.5, 0, 1, -4),
+            Size           = UDim2.new(1, -4, 0, 14),
+            Text           = ESPPreview.Weapon,
+            TextSize       = 13,
+            TextXAlignment = Enum.TextXAlignment.Center,
+            Visible        = ESPPreview.ShowWeapon,
+            ZIndex         = 7,
+            Parent         = BoxInner,
+        })
+        local AllParts = { Head, Torso, LeftArm, RightArm, LeftLeg, RightLeg }
+        function ESPPreview:SetUsername(Text)
+            ESPPreview.Username = tostring(Text)
+            UsernameLabel.Text = ESPPreview.Username
+        end
+        function ESPPreview:SetWeapon(Text)
+            ESPPreview.Weapon = tostring(Text)
+            WeaponLabel.Text = ESPPreview.Weapon
+        end
+        function ESPPreview:SetBoxColor(Color)
+            ESPPreview.BoxColor = Color
+            BoxInner.BorderColor3 = Color
+        end
+        function ESPPreview:SetBodyColor(Color)
+            ESPPreview.BodyColor = Color
+            for _, p in next, AllParts do p.BackgroundColor3 = Color end
+        end
+        function ESPPreview:SetShowUsername(Value)
+            ESPPreview.ShowUsername = Value
+            UsernameLabel.Visible = Value
+        end
+        function ESPPreview:SetShowWeapon(Value)
+            ESPPreview.ShowWeapon = Value
+            WeaponLabel.Visible = Value
+        end
+        Groupbox:AddBlank(5)
+        Groupbox:Resize()
+        ESPPreview.Holder    = Holder
+        ESPPreview.Container = Container
+        table.insert(Groupbox.Elements, ESPPreview)
+        return ESPPreview
+    end
     BaseGroupbox.__index = BaseGroupboxFuncs
     BaseGroupbox.__namecall = function(Table, Key, ...)
         return BaseGroupboxFuncs[Key](...)
