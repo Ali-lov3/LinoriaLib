@@ -16,7 +16,8 @@ local Window = Library:CreateWindow({
 	UnlockMouseWhileOpen = true,
 	NotifySide = "Left",
 	TabPadding = 8,
-	MenuFadeTime = 0.2
+	MenuFadeTime = 0.2,
+	TabShowName = true,
 })
 local Tabs = {
 	Main = Window:AddTab({ Name = "Main", Icon = "house" }),
@@ -563,14 +564,6 @@ Library:OnUnload(function()
 	print("Unloaded!")
 	Library.Unloaded = true
 end)
-local TabGroup = Tabs["UI Settings"]:AddLeftGroupbox("Tabs")
-TabGroup:AddToggle("TabShowName", {
-	Text    = "Show Tab Names",
-	Default = true,
-	Callback = function(Value)
-		Window:SetTabShowName(Value)
-	end,
-})
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
 MenuGroup:AddToggle("KeybindMenuOpen", { Default = Library.KeybindFrame.Visible, Text = "Open Keybind Menu", Callback = function(value) Library.KeybindFrame.Visible = value end })
 MenuGroup:AddToggle("ShowCustomCursor", { Text = "Custom Cursor", Default = true, Callback = function(Value) Library.ShowCustomCursor = Value end })
@@ -578,7 +571,7 @@ MenuGroup:AddDivider()
 MenuGroup:AddLabel("Menu bind"):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu keybind" })
 MenuGroup:AddButton("Unload", function() Library:Unload() end)
 Library.ToggleKeybind = Options.MenuKeybind
-local NotifGroup = Tabs["UI Settings"]:AddRightGroupbox("Notification Position")
+local NotifGroup = Tabs.Main:AddRightGroupbox("Notification Position")
 local NotifPositions = {
 	["Top Left"]      = "LeftUp",
 	["Top Middle"]    = "MiddleUp",

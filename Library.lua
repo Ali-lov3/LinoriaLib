@@ -5468,7 +5468,7 @@ function Library:CreateWindow(...)
         OriginalTitle = WindowInfo.Title; 
         Title = WindowInfo.Title;
         TabButtonData = {};
-        TabShowName = true;
+        TabShowName = WindowInfo.TabShowName ~= false;
     }
     local Outer = Library:Create("Frame", {
         AnchorPoint = WindowInfo.AnchorPoint;
@@ -6900,6 +6900,7 @@ end
         end)
     end
     Window:SetBackgroundImage(WindowInfo.BackgroundImage or "")
+    if WindowInfo.TabShowName == false then Window:SetTabShowName(false) end
     if WindowInfo.AutoShow then task.spawn(Library.Toggle) end
     Window.Holder = Outer
     Library.Window = Window
