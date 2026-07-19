@@ -7210,7 +7210,10 @@ function Library:CreateWindow(...)
         return Dialog
     end
 
-    function Window:AddTab(Name)
+    function Window:AddTab(Info)
+        local TabName   = typeof(Info) == "table" and (Info.Name or Info[1] or "") or tostring(Info)
+        local TabIcon   = typeof(Info) == "table" and Info.Icon or nil
+
         local Tab = {
             Groupboxes = {};
             Tabboxes = {};
@@ -7223,17 +7226,15 @@ function Library:CreateWindow(...)
                 Title = "WARNING",
                 Text = ""
             };
-            OriginalName = Name; 
-            Name = Name;
+            OriginalName = TabName;
+            Name = TabName;
             TableType = "Tab";
         }
-
-        local TabButtonWidth = Library:GetTextBounds(Tab.Name, Library.Font, 16)
 
         local TabButton = Library:Create("Frame", {
             BackgroundColor3 = Library.BackgroundColor;
             BorderColor3 = Library.OutlineColor;
-            Size = UDim2.new(1, -4, 0, 24);
+            Size = UDim2.new(1, -4, 0, 28);
             ZIndex = 1;
             Parent = TabArea;
         })
@@ -7243,11 +7244,35 @@ function Library:CreateWindow(...)
             BorderColor3 = "OutlineColor";
         })
 
+        -- Icon (optional, shown left of label)
+        local TabIconLabel = nil
+        local LabelOffsetX = 6
+        if TabIcon then
+            local ParsedIcon = Library:GetCustomIcon(TabIcon)
+            if ParsedIcon then
+                TabIconLabel = Library:Create("ImageLabel", {
+                    BackgroundTransparency = 1;
+                    AnchorPoint = Vector2.new(0, 0.5);
+                    Position = UDim2.new(0, 7, 0.5, 0);
+                    Size = UDim2.fromOffset(14, 14);
+                    Image = ParsedIcon.Url;
+                    ImageColor3 = Library.FontColor;
+                    ImageRectOffset = ParsedIcon.ImageRectOffset;
+                    ImageRectSize = ParsedIcon.ImageRectSize;
+                    ZIndex = 2;
+                    Parent = TabButton;
+                })
+                Library:AddToRegistry(TabIconLabel, { ImageColor3 = "FontColor" })
+                LabelOffsetX = 25  -- icon (7) + 14px + 4px gap
+            end
+        end
+
         local TabButtonLabel = Library:CreateLabel({
-            Position = UDim2.new(0, 0, 0, 0);
-            Size = UDim2.new(1, 0, 1, -1);
+            Position = UDim2.new(0, LabelOffsetX, 0, 0);
+            Size = UDim2.new(1, -LabelOffsetX, 1, -1);
             Text = Tab.Name;
-            ZIndex = 1;
+            TextXAlignment = Enum.TextXAlignment.Left;
+            ZIndex = 2;
             Parent = TabButton;
         })
 
@@ -7552,8 +7577,34 @@ end
         function Tab:SetName(Name)
             if typeof(Name) == "string" then
                 Tab.Name = Name
-                TabButton.Size = UDim2.new(1, -4, 0, 24)
+                TabButton.Size = UDim2.new(1, -4, 0, 28)
                 TabButtonLabel.Text = Tab.Name
+            end
+        end
+
+        function Tab:SetIcon(IconName)
+            local ParsedIcon = Library:GetCustomIcon(IconName)
+            if not ParsedIcon then return end
+            if TabIconLabel then
+                TabIconLabel.Image = ParsedIcon.Url
+                TabIconLabel.ImageRectOffset = ParsedIcon.ImageRectOffset
+                TabIconLabel.ImageRectSize = ParsedIcon.ImageRectSize
+            else
+                TabIconLabel = Library:Create("ImageLabel", {
+                    BackgroundTransparency = 1;
+                    AnchorPoint = Vector2.new(0, 0.5);
+                    Position = UDim2.new(0, 7, 0.5, 0);
+                    Size = UDim2.fromOffset(14, 14);
+                    Image = ParsedIcon.Url;
+                    ImageColor3 = Library.FontColor;
+                    ImageRectOffset = ParsedIcon.ImageRectOffset;
+                    ImageRectSize = ParsedIcon.ImageRectSize;
+                    ZIndex = 2;
+                    Parent = TabButton;
+                })
+                Library:AddToRegistry(TabIconLabel, { ImageColor3 = "FontColor" })
+                TabButtonLabel.Position = UDim2.new(0, 25, 0, 0)
+                TabButtonLabel.Size = UDim2.new(1, -25, 1, -1)
             end
         end
 
