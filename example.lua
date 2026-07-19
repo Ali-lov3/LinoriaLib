@@ -17,7 +17,7 @@ local Window = Library:CreateWindow({
 	NotifySide = "Left",
 	TabPadding = 8,
 	MenuFadeTime = 0.2,
-	TabShowName = true,
+	TabShowName = false,
 })
 local Tabs = {
 	Main = Window:AddTab({ Name = "Main", Icon = "house" }),
