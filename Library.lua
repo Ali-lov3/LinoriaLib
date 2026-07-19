@@ -4768,68 +4768,152 @@ do
         local Groupbox = self
         local Container = Groupbox.Container
         local ESPPreview = {
-            Type        = "ESPPreview",
-            Username    = tostring(Info.Username or "Username"),
-            Weapon      = tostring(Info.Weapon   or "Weapon"),
-            BoxColor    = Info.BoxColor  or Library.AccentColor,
-            BodyColor   = Info.BodyColor or Color3.fromRGB(170, 150, 50),
-            ShowUsername = Info.ShowUsername ~= false,
-            ShowWeapon   = Info.ShowWeapon   ~= false,
+            Type           = "ESPPreview",
+            Username       = tostring(Info.Username      or "Username"),
+            Weapon         = tostring(Info.Weapon        or "Weapon"),
+            BoxColor       = Info.BoxColor       or Library.AccentColor,
+            BodyColor      = Info.BodyColor      or Color3.fromRGB(170, 150, 50),
+            ChamsColor     = Info.ChamsColor     or Color3.fromRGB(220, 80,  80),
+            FillBoxColor   = Info.FillBoxColor   or Color3.fromRGB(255, 255, 255),
+            HealthBarColor = Info.HealthBarColor or Color3.fromRGB(100, 220, 80),
+            Health         = math.clamp(tonumber(Info.Health)    or 100, 0, 100),
+            MaxHealth      = math.max (tonumber(Info.MaxHealth)  or 100, 1),
+            Distance       = tonumber (Info.Distance)    or 50,
+            ShowUsername   = Info.ShowUsername   ~= false,
+            ShowWeapon     = Info.ShowWeapon     ~= false,
+            ShowBox        = Info.ShowBox        ~= false,
+            ShowCornerBox  = Info.ShowCornerBox  == true,
+            ShowChams      = Info.ShowChams      == true,
+            ShowHeadDot    = Info.ShowHeadDot    == true,
+            ShowFillBox    = Info.ShowFillBox    == true,
+            ShowDistance   = Info.ShowDistance   == true,
+            ShowHealthText = Info.ShowHealthText == true,
+            ShowHealthBar  = Info.ShowHealthBar  == true,
         }
         local PH = 192
+        local CL, CT = 28, 2
+        -- Holder is taller to fit the distance label below the box
         local Holder = Library:Create("Frame", {
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, -4, 0, PH),
+            Size   = UDim2.new(1, -4, 0, PH + 18),
             ZIndex = 5,
             Parent = Container,
         })
+        -- === FULL BOX ===
         local BoxOuter = Library:Create("Frame", {
-            BackgroundColor3 = Color3.new(0, 0, 0),
-            BorderColor3     = Color3.new(0, 0, 0),
-            AnchorPoint      = Vector2.new(0.5, 0),
-            Position         = UDim2.new(0.5, 0, 0, 0),
-            Size             = UDim2.new(0, 138, 0, PH),
-            ZIndex           = 5,
-            Parent           = Holder,
+            BackgroundColor3       = Color3.new(0, 0, 0),
+            BackgroundTransparency = ESPPreview.ShowBox and 0 or 1,
+            BorderSizePixel        = ESPPreview.ShowBox and 1 or 0,
+            BorderColor3           = Color3.new(0, 0, 0),
+            AnchorPoint            = Vector2.new(0.5, 0),
+            Position               = UDim2.new(0.5, 0, 0, 0),
+            Size                   = UDim2.new(0, 138, 0, PH),
+            ZIndex                 = 5,
+            Parent                 = Holder,
         })
         local BoxInner = Library:Create("Frame", {
             BackgroundColor3 = Library.BackgroundColor,
             BorderColor3     = ESPPreview.BoxColor,
+            BorderSizePixel  = ESPPreview.ShowBox and 1 or 0,
             BorderMode       = Enum.BorderMode.Inset,
             Size             = UDim2.new(1, 0, 1, 0),
             ZIndex           = 6,
             Parent           = BoxOuter,
         })
         Library:AddToRegistry(BoxInner, { BackgroundColor3 = "BackgroundColor" }, true)
-        local UsernameLabel = Library:CreateLabel({
-            AnchorPoint      = Vector2.new(0.5, 0),
-            Position         = UDim2.new(0.5, 0, 0, 4),
-            Size             = UDim2.new(1, -4, 0, 14),
-            Text             = ESPPreview.Username,
-            TextSize         = 13,
-            TextXAlignment   = Enum.TextXAlignment.Center,
-            Visible          = ESPPreview.ShowUsername,
+        -- === FILL BOX (semi-transparent color layer inside the box) ===
+        local FillBoxFrame = Library:Create("Frame", {
+            BackgroundColor3       = ESPPreview.FillBoxColor,
+            BackgroundTransparency = 0.65,
+            BorderSizePixel        = 0,
+            Size                   = UDim2.new(1, 0, 1, 0),
+            ZIndex                 = 7,
+            Visible                = ESPPreview.ShowFillBox,
+            Parent                 = BoxInner,
+        })
+        -- === CORNER BOX ===
+        local CornerHolder = Library:Create("Frame", {
+            BackgroundTransparency = 1,
+            AnchorPoint            = Vector2.new(0.5, 0),
+            Position               = UDim2.new(0.5, 0, 0, 0),
+            Size                   = UDim2.new(0, 138, 0, PH),
+            ZIndex                 = 9,
+            Visible                = ESPPreview.ShowCornerBox,
+            Parent                 = Holder,
+        })
+        local AllCorners = {}
+        local function CornerPiece(px1, px2, py1, py2, sx2, sy2)
+            local f = Library:Create("Frame", {
+                BackgroundColor3 = ESPPreview.BoxColor,
+                BorderSizePixel  = 0,
+                Position         = UDim2.new(px1, px2, py1, py2),
+                Size             = UDim2.new(0, sx2, 0, sy2),
+                ZIndex           = 10,
+                Parent           = CornerHolder,
+            })
+            table.insert(AllCorners, f)
+        end
+        CornerPiece(0, 0,   0, 0,   CL, CT)
+        CornerPiece(0, 0,   0, 0,   CT, CL)
+        CornerPiece(1, -CL, 0, 0,   CL, CT)
+        CornerPiece(1, -CT, 0, 0,   CT, CL)
+        CornerPiece(0, 0,   1, -CT, CL, CT)
+        CornerPiece(0, 0,   1, -CL, CT, CL)
+        CornerPiece(1, -CL, 1, -CT, CL, CT)
+        CornerPiece(1, -CT, 1, -CL, CT, CL)
+        -- === HEALTH BAR (vertical bar to the right of the box) ===
+        local HealthBarBg = Library:Create("Frame", {
+            BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+            BorderSizePixel  = 1,
+            BorderColor3     = Color3.new(0, 0, 0),
+            AnchorPoint      = Vector2.new(0, 0),
+            Position         = UDim2.new(0.5, 72, 0, 0),
+            Size             = UDim2.new(0, 6, 0, PH),
+            ZIndex           = 6,
+            Visible          = ESPPreview.ShowHealthBar,
+            Parent           = Holder,
+        })
+        local HealthBarFill = Library:Create("Frame", {
+            BackgroundColor3 = ESPPreview.HealthBarColor,
+            BorderSizePixel  = 0,
+            AnchorPoint      = Vector2.new(0, 1),
+            Position         = UDim2.new(0, 0, 1, 0),
+            Size             = UDim2.new(1, 0, ESPPreview.Health / ESPPreview.MaxHealth, 0),
             ZIndex           = 7,
-            Parent           = BoxInner,
+            Parent           = HealthBarBg,
+        })
+        -- === LABELS INSIDE BOX ===
+        local UsernameLabel = Library:CreateLabel({
+            AnchorPoint    = Vector2.new(0.5, 0),
+            Position       = UDim2.new(0.5, 0, 0, 4),
+            Size           = UDim2.new(1, -4, 0, 14),
+            Text           = ESPPreview.Username,
+            TextSize       = 13,
+            TextXAlignment = Enum.TextXAlignment.Center,
+            Visible        = ESPPreview.ShowUsername,
+            ZIndex         = 10,
+            Parent         = BoxInner,
         })
         local BodyFrame = Library:Create("Frame", {
             BackgroundTransparency = 1,
             AnchorPoint            = Vector2.new(0.5, 0.5),
             Position               = UDim2.new(0.5, 0, 0.5, 0),
             Size                   = UDim2.new(0, 110, 0, 132),
-            ZIndex                 = 7,
+            ZIndex                 = 8,
             Parent                 = BoxInner,
         })
-        local BC = ESPPreview.BodyColor
+        local function ActiveBodyColor()
+            return ESPPreview.ShowChams and ESPPreview.ChamsColor or ESPPreview.BodyColor
+        end
         local function Part(ax, ay, px, py, sx, sy)
             return Library:Create("Frame", {
-                BackgroundColor3 = BC,
+                BackgroundColor3 = ActiveBodyColor(),
                 BorderSizePixel  = 1,
                 BorderColor3     = Color3.fromRGB(0, 0, 0),
                 AnchorPoint      = Vector2.new(ax, ay),
                 Position         = UDim2.new(0.5, px, 0, py),
                 Size             = UDim2.new(0, sx, 0, sy),
-                ZIndex           = 8,
+                ZIndex           = 9,
                 Parent           = BodyFrame,
             })
         end
@@ -4839,6 +4923,28 @@ do
         local RightArm = Part(0,   0,   29,  30,  26,  52)
         local LeftLeg  = Part(1,   0,  -2,   84,  26,  48)
         local RightLeg = Part(0,   0,   2,   84,  26,  48)
+        local HeadDot = Library:Create("Frame", {
+            BackgroundColor3 = ESPPreview.BoxColor,
+            BorderSizePixel  = 0,
+            AnchorPoint      = Vector2.new(0.5, 0.5),
+            Position         = UDim2.new(0.5, 0, 0, 44),
+            Size             = UDim2.new(0, 8, 0, 8),
+            ZIndex           = 11,
+            Visible          = ESPPreview.ShowHeadDot,
+            Parent           = BoxInner,
+        })
+        -- Health text: shown just above the weapon label
+        local HealthTextLabel = Library:CreateLabel({
+            AnchorPoint    = Vector2.new(0.5, 1),
+            Position       = UDim2.new(0.5, 0, 1, -18),
+            Size           = UDim2.new(1, -4, 0, 13),
+            Text           = tostring(ESPPreview.Health) .. " HP",
+            TextSize       = 11,
+            TextXAlignment = Enum.TextXAlignment.Center,
+            Visible        = ESPPreview.ShowHealthText,
+            ZIndex         = 10,
+            Parent         = BoxInner,
+        })
         local WeaponLabel = Library:CreateLabel({
             AnchorPoint    = Vector2.new(0.5, 1),
             Position       = UDim2.new(0.5, 0, 1, -4),
@@ -4847,10 +4953,43 @@ do
             TextSize       = 13,
             TextXAlignment = Enum.TextXAlignment.Center,
             Visible        = ESPPreview.ShowWeapon,
-            ZIndex         = 7,
+            ZIndex         = 10,
             Parent         = BoxInner,
         })
+        -- Distance label: below the box
+        local DistanceLabel = Library:CreateLabel({
+            AnchorPoint    = Vector2.new(0.5, 0),
+            Position       = UDim2.new(0.5, 0, 0, PH + 4),
+            Size           = UDim2.new(0, 138, 0, 14),
+            Text           = tostring(ESPPreview.Distance) .. "m",
+            TextSize       = 12,
+            TextXAlignment = Enum.TextXAlignment.Center,
+            Visible        = ESPPreview.ShowDistance,
+            ZIndex         = 8,
+            Parent         = Holder,
+        })
         local AllParts = { Head, Torso, LeftArm, RightArm, LeftLeg, RightLeg }
+        -- === REFRESH HELPERS ===
+        local function RefreshBodyColor()
+            local C = ActiveBodyColor()
+            for _, p in next, AllParts do p.BackgroundColor3 = C end
+        end
+        local function RefreshBoxColor()
+            BoxInner.BorderColor3 = ESPPreview.BoxColor
+            HeadDot.BackgroundColor3 = ESPPreview.BoxColor
+            for _, c in next, AllCorners do c.BackgroundColor3 = ESPPreview.BoxColor end
+        end
+        local function RefreshBoxVisual()
+            BoxOuter.BackgroundTransparency = ESPPreview.ShowBox and 0 or 1
+            BoxOuter.BorderSizePixel        = ESPPreview.ShowBox and 1 or 0
+            BoxInner.BorderSizePixel        = ESPPreview.ShowBox and 1 or 0
+        end
+        local function RefreshHealth()
+            local pct = math.clamp(ESPPreview.Health / ESPPreview.MaxHealth, 0, 1)
+            HealthBarFill.Size = UDim2.new(1, 0, pct, 0)
+            HealthTextLabel.Text = tostring(ESPPreview.Health) .. " HP"
+        end
+        -- === METHODS ===
         function ESPPreview:SetUsername(Text)
             ESPPreview.Username = tostring(Text)
             UsernameLabel.Text = ESPPreview.Username
@@ -4861,11 +5000,31 @@ do
         end
         function ESPPreview:SetBoxColor(Color)
             ESPPreview.BoxColor = Color
-            BoxInner.BorderColor3 = Color
+            RefreshBoxColor()
         end
         function ESPPreview:SetBodyColor(Color)
             ESPPreview.BodyColor = Color
-            for _, p in next, AllParts do p.BackgroundColor3 = Color end
+            if not ESPPreview.ShowChams then RefreshBodyColor() end
+        end
+        function ESPPreview:SetChamsColor(Color)
+            ESPPreview.ChamsColor = Color
+            if ESPPreview.ShowChams then RefreshBodyColor() end
+        end
+        function ESPPreview:SetFillBoxColor(Color)
+            ESPPreview.FillBoxColor = Color
+            FillBoxFrame.BackgroundColor3 = Color
+        end
+        function ESPPreview:SetHealthBarColor(Color)
+            ESPPreview.HealthBarColor = Color
+            HealthBarFill.BackgroundColor3 = Color
+        end
+        function ESPPreview:SetHealth(Value)
+            ESPPreview.Health = math.clamp(math.floor(tonumber(Value) or 100), 0, ESPPreview.MaxHealth)
+            RefreshHealth()
+        end
+        function ESPPreview:SetDistance(Value)
+            ESPPreview.Distance = math.floor(tonumber(Value) or 0)
+            DistanceLabel.Text = tostring(ESPPreview.Distance) .. "m"
         end
         function ESPPreview:SetShowUsername(Value)
             ESPPreview.ShowUsername = Value
@@ -4874,6 +5033,38 @@ do
         function ESPPreview:SetShowWeapon(Value)
             ESPPreview.ShowWeapon = Value
             WeaponLabel.Visible = Value
+        end
+        function ESPPreview:SetShowBox(Value)
+            ESPPreview.ShowBox = Value
+            RefreshBoxVisual()
+        end
+        function ESPPreview:SetShowCornerBox(Value)
+            ESPPreview.ShowCornerBox = Value
+            CornerHolder.Visible = Value
+        end
+        function ESPPreview:SetShowChams(Value)
+            ESPPreview.ShowChams = Value
+            RefreshBodyColor()
+        end
+        function ESPPreview:SetShowHeadDot(Value)
+            ESPPreview.ShowHeadDot = Value
+            HeadDot.Visible = Value
+        end
+        function ESPPreview:SetShowFillBox(Value)
+            ESPPreview.ShowFillBox = Value
+            FillBoxFrame.Visible = Value
+        end
+        function ESPPreview:SetShowDistance(Value)
+            ESPPreview.ShowDistance = Value
+            DistanceLabel.Visible = Value
+        end
+        function ESPPreview:SetShowHealthText(Value)
+            ESPPreview.ShowHealthText = Value
+            HealthTextLabel.Visible = Value
+        end
+        function ESPPreview:SetShowHealthBar(Value)
+            ESPPreview.ShowHealthBar = Value
+            HealthBarBg.Visible = Value
         end
         Groupbox:AddBlank(5)
         Groupbox:Resize()
