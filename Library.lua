@@ -6626,23 +6626,23 @@ function Library:CreateWindow(...)
     })
 
     local TabArea = Library:Create("ScrollingFrame", {
-        ScrollingDirection = Enum.ScrollingDirection.X;
-        CanvasSize = UDim2.new(0, 0, 2, 0);
-        HorizontalScrollBarInset = Enum.ScrollBarInset.Always;
-        AutomaticCanvasSize = Enum.AutomaticSize.XY;
+        ScrollingDirection = Enum.ScrollingDirection.Y;
+        CanvasSize = UDim2.new(0, 0, 0, 0);
+        AutomaticCanvasSize = Enum.AutomaticSize.Y;
         ScrollBarThickness = 0;
         BackgroundTransparency = 1;
-        Position = UDim2.new(0, 8 - WindowInfo.TabPadding, 0, 4);
-        Size = UDim2.new(1, -10, 0, 26);
+        Position = UDim2.new(0, 0, 0, 0);
+        Size = UDim2.new(0, 110, 1, 0);
         ZIndex = 1;
         Parent = MainSectionInner;
     })
 
     local TabListLayout = Library:Create("UIListLayout", {
         Padding = UDim.new(0, WindowInfo.TabPadding);
-        FillDirection = Enum.FillDirection.Horizontal;
+        FillDirection = Enum.FillDirection.Vertical;
         SortOrder = Enum.SortOrder.LayoutOrder;
-        VerticalAlignment = Enum.VerticalAlignment.Center;
+        HorizontalAlignment = Enum.HorizontalAlignment.Center;
+        VerticalAlignment = Enum.VerticalAlignment.Top;
         Parent = TabArea;
     })
 
@@ -6668,8 +6668,8 @@ function Library:CreateWindow(...)
     local TabContainer = Library:Create("Frame", {
         BackgroundColor3 = Library.MainColor;
         BorderColor3 = Library.OutlineColor;
-        Position = UDim2.new(0, 8, 0, 30);
-        Size = UDim2.new(1, -16, 1, -38);
+        Position = UDim2.new(0, 114, 0, 0);
+        Size = UDim2.new(1, -114, 1, 0);
         ZIndex = 2;
         Parent = MainSectionInner;
     })
@@ -7233,7 +7233,7 @@ function Library:CreateWindow(...)
         local TabButton = Library:Create("Frame", {
             BackgroundColor3 = Library.BackgroundColor;
             BorderColor3 = Library.OutlineColor;
-            Size = UDim2.new(0, TabButtonWidth + 8 + 4, 0.85, 0);
+            Size = UDim2.new(1, -4, 0, 24);
             ZIndex = 1;
             Parent = TabArea;
         })
@@ -7254,8 +7254,8 @@ function Library:CreateWindow(...)
         local Blocker = Library:Create("Frame", {
             BackgroundColor3 = Library.MainColor;
             BorderSizePixel = 0;
-            Position = UDim2.new(0, 0, 1, 0);
-            Size = UDim2.new(1, 0, 0, 1);
+            Position = UDim2.new(1, 0, 0, 0);
+            Size = UDim2.new(0, 4, 1, 0);
             BackgroundTransparency = 1;
             ZIndex = 3;
             Parent = TabButton;
@@ -7552,10 +7552,7 @@ end
         function Tab:SetName(Name)
             if typeof(Name) == "string" then
                 Tab.Name = Name
-
-                local TabButtonWidth = Library:GetTextBounds(Tab.Name, Library.Font, 16)
-
-                TabButton.Size = UDim2.new(0, TabButtonWidth + 8 + 4, 0.85, 0)
+                TabButton.Size = UDim2.new(1, -4, 0, 24)
                 TabButtonLabel.Text = Tab.Name
             end
         end
