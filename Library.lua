@@ -7933,7 +7933,7 @@ end
             Tab:ShowTab()
         end
 
-        Window.Tabs[Name] = Tab
+        Window.Tabs[TabName] = Tab
         return Tab
     end
 
