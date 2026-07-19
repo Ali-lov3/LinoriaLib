@@ -377,41 +377,133 @@ SecretDepbox:SetupDependencies({
 })
 local ESPPreviewBox = Tabs.ESP:AddLeftGroupbox("Preview")
 local MyESPPreview = ESPPreviewBox:AddESPPreview({
-	Username    = "Username",
-	Weapon      = "Weapon",
-	BoxColor    = Color3.fromRGB(170, 150, 50),
-	BodyColor   = Color3.fromRGB(170, 150, 50),
-	ShowUsername = true,
-	ShowWeapon   = true,
+	Username       = "Username",
+	Weapon         = "Weapon",
+	BoxColor       = Color3.fromRGB(170, 150, 50),
+	BodyColor      = Color3.fromRGB(170, 150, 50),
+	ChamsColor     = Color3.fromRGB(220, 80,  80),
+	FillBoxColor   = Color3.fromRGB(255, 255, 255),
+	HealthBarColor = Color3.fromRGB(100, 220, 80),
+	Health         = 100,
+	MaxHealth      = 100,
+	Distance       = 50,
+	ShowUsername   = true,
+	ShowWeapon     = true,
+	ShowBox        = true,
+	ShowCornerBox  = false,
+	ShowChams      = false,
+	ShowHeadDot    = false,
+	ShowFillBox    = false,
+	ShowDistance   = false,
+	ShowHealthText = false,
+	ShowHealthBar  = false,
 })
 local ESPSettings = Tabs.ESP:AddRightGroupbox("Settings")
-ESPSettings:AddInput("ESPUsernameInput", {
-	Text        = "Username text",
-	Default     = "Username",
-	Placeholder = "e.g. Player1",
-	Callback    = function(Value)
-		MyESPPreview:SetUsername(Value)
+ESPSettings:AddToggle("ESPShowBox", {
+	Text    = "Box",
+	Default = true,
+	Callback = function(Value)
+		MyESPPreview:SetShowBox(Value)
 	end,
-})
-ESPSettings:AddInput("ESPWeaponInput", {
-	Text        = "Weapon text",
-	Default     = "Weapon",
-	Placeholder = "e.g. AK-47",
-	Callback    = function(Value)
-		MyESPPreview:SetWeapon(Value)
-	end,
-})
-ESPSettings:AddDivider()
-ESPSettings:AddLabel("Box color"):AddColorPicker("ESPBoxColor", {
+}):AddColorPicker("ESPBoxColor", {
 	Default  = Color3.fromRGB(170, 150, 50),
-	Title    = "ESP Box Color",
+	Title    = "Box Color",
 	Callback = function(Value)
 		MyESPPreview:SetBoxColor(Value)
 	end,
 })
+ESPSettings:AddToggle("ESPShowCornerBox", {
+	Text    = "Corner Box",
+	Default = false,
+	Callback = function(Value)
+		MyESPPreview:SetShowCornerBox(Value)
+	end,
+})
+ESPSettings:AddToggle("ESPShowChams", {
+	Text    = "Chams",
+	Default = false,
+	Callback = function(Value)
+		MyESPPreview:SetShowChams(Value)
+	end,
+}):AddColorPicker("ESPChamsColor", {
+	Default  = Color3.fromRGB(220, 80, 80),
+	Title    = "Chams Color",
+	Callback = function(Value)
+		MyESPPreview:SetChamsColor(Value)
+	end,
+})
+ESPSettings:AddToggle("ESPShowHeadDot", {
+	Text    = "Head Dot",
+	Default = false,
+	Callback = function(Value)
+		MyESPPreview:SetShowHeadDot(Value)
+	end,
+})
+ESPSettings:AddToggle("ESPShowFillBox", {
+	Text    = "Fill Box",
+	Default = false,
+	Callback = function(Value)
+		MyESPPreview:SetShowFillBox(Value)
+	end,
+}):AddColorPicker("ESPFillBoxColor", {
+	Default  = Color3.fromRGB(255, 255, 255),
+	Title    = "Fill Box Color",
+	Callback = function(Value)
+		MyESPPreview:SetFillBoxColor(Value)
+	end,
+})
+ESPSettings:AddToggle("ESPShowHealthBar", {
+	Text    = "Health Bar",
+	Default = false,
+	Callback = function(Value)
+		MyESPPreview:SetShowHealthBar(Value)
+	end,
+}):AddColorPicker("ESPHealthBarColor", {
+	Default  = Color3.fromRGB(100, 220, 80),
+	Title    = "Health Bar Color",
+	Callback = function(Value)
+		MyESPPreview:SetHealthBarColor(Value)
+	end,
+})
+ESPSettings:AddToggle("ESPShowHealthText", {
+	Text    = "Health Text",
+	Default = false,
+	Callback = function(Value)
+		MyESPPreview:SetShowHealthText(Value)
+	end,
+})
+ESPSettings:AddToggle("ESPShowDistance", {
+	Text    = "Distance",
+	Default = false,
+	Callback = function(Value)
+		MyESPPreview:SetShowDistance(Value)
+	end,
+})
+ESPSettings:AddDivider()
+ESPSettings:AddSlider("ESPHealthSlider", {
+	Text     = "Preview Health",
+	Default  = 100,
+	Min      = 0,
+	Max      = 100,
+	Rounding = 0,
+	Callback = function(Value)
+		MyESPPreview:SetHealth(Value)
+	end,
+})
+ESPSettings:AddSlider("ESPDistanceSlider", {
+	Text     = "Preview Distance",
+	Default  = 50,
+	Min      = 0,
+	Max      = 500,
+	Rounding = 0,
+	Callback = function(Value)
+		MyESPPreview:SetDistance(Value)
+	end,
+})
+ESPSettings:AddDivider()
 ESPSettings:AddLabel("Body color"):AddColorPicker("ESPBodyColor", {
 	Default  = Color3.fromRGB(170, 150, 50),
-	Title    = "ESP Body Color",
+	Title    = "Body Color",
 	Callback = function(Value)
 		MyESPPreview:SetBodyColor(Value)
 	end,
@@ -424,11 +516,27 @@ ESPSettings:AddToggle("ESPShowUsername", {
 		MyESPPreview:SetShowUsername(Value)
 	end,
 })
+ESPSettings:AddInput("ESPUsernameInput", {
+	Text        = "Username text",
+	Default     = "Username",
+	Placeholder = "e.g. Player1",
+	Callback    = function(Value)
+		MyESPPreview:SetUsername(Value)
+	end,
+})
 ESPSettings:AddToggle("ESPShowWeapon", {
 	Text    = "Show Weapon",
 	Default = true,
 	Callback = function(Value)
 		MyESPPreview:SetShowWeapon(Value)
+	end,
+})
+ESPSettings:AddInput("ESPWeaponInput", {
+	Text        = "Weapon text",
+	Default     = "Weapon",
+	Placeholder = "e.g. AK-47",
+	Callback    = function(Value)
+		MyESPPreview:SetWeapon(Value)
 	end,
 })
 Library:SetWatermarkVisibility(true)
