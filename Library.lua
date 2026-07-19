@@ -208,6 +208,7 @@ local Library = {
     DevicePlatform = Enum.Platform.None;
     CanDrag = true;
     CantDragForced = false;
+    ScrollActive = false;
     Unloaded = false;
     Notify = nil;
     NotifySide = "Left";
@@ -312,12 +313,16 @@ function Library:GetIcon(IconName: string)
     end
     return Icon
 end
-function Library:GetCustomIcon(IconName: string)
+function Library:GetCustomIcon(IconName)
+    -- Accept plain numeric IDs (number or digit-only string) → rbxassetid://
+    if typeof(IconName) == "number" or (typeof(IconName) == "string" and IconName:match("^%d+$")) then
+        IconName = "rbxassetid://" .. tostring(IconName)
+    end
     if not IsValidCustomIcon(IconName) then
-        return Library:GetIcon(IconName)
+        return Library:GetIcon(tostring(IconName))
     else
         return {
-            Url = IconName,
+            Url = tostring(IconName),
             ImageRectOffset = Vector2.zero,
             ImageRectSize = Vector2.zero,
             Custom = true,
@@ -423,6 +428,15 @@ end
 function Library:MakeDraggable(Instance, Cutoff, IsMainWindow)
     Instance.Active = true
     if Library.IsMobile == false then
+        if not Library._ScrollListenerSetup then
+            Library._ScrollListenerSetup = true
+            InputService.InputChanged:Connect(function(Input)
+                if Input.UserInputType == Enum.UserInputType.MouseWheel then
+                    Library.ScrollActive = true
+                    task.delay(0.2, function() Library.ScrollActive = false end)
+                end
+            end)
+        end
         Instance.InputBegan:Connect(function(Input)
             if Input.UserInputType == Enum.UserInputType.MouseButton1 then
                 if IsMainWindow == true and Library.CantDragForced == true then
@@ -436,6 +450,7 @@ function Library:MakeDraggable(Instance, Cutoff, IsMainWindow)
                     return
                 end
                 while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+                    if Library.ScrollActive then break end
                     Instance.Position = UDim2.new(
                         0,
                         Mouse.X - ObjPos.X + (Instance.Size.X.Offset * Instance.AnchorPoint.X),
