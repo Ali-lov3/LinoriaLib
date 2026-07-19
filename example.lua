@@ -20,6 +20,7 @@ local Window = Library:CreateWindow({
 })
 local Tabs = {
 	Main = Window:AddTab({ Name = "Main", Icon = "house" }),
+	ESP = Window:AddTab({ Name = "ESP", Icon = "eye" }),
 	["UI Settings"] = Window:AddTab({ Name = "UI Settings", Icon = "settings" }),
 }
 local LeftGroupBox = Tabs.Main:AddLeftGroupbox("Groupbox")
@@ -373,6 +374,62 @@ SubDepbox:SetupDependencies({
 })
 SecretDepbox:SetupDependencies({
 	{ Options.DepboxDropdown, "c" }
+})
+local ESPPreviewBox = Tabs.ESP:AddLeftGroupbox("Preview")
+local MyESPPreview = ESPPreviewBox:AddESPPreview({
+	Username    = "Username",
+	Weapon      = "Weapon",
+	BoxColor    = Color3.fromRGB(170, 150, 50),
+	BodyColor   = Color3.fromRGB(170, 150, 50),
+	ShowUsername = true,
+	ShowWeapon   = true,
+})
+local ESPSettings = Tabs.ESP:AddRightGroupbox("Settings")
+ESPSettings:AddInput("ESPUsernameInput", {
+	Text        = "Username text",
+	Default     = "Username",
+	Placeholder = "e.g. Player1",
+	Callback    = function(Value)
+		MyESPPreview:SetUsername(Value)
+	end,
+})
+ESPSettings:AddInput("ESPWeaponInput", {
+	Text        = "Weapon text",
+	Default     = "Weapon",
+	Placeholder = "e.g. AK-47",
+	Callback    = function(Value)
+		MyESPPreview:SetWeapon(Value)
+	end,
+})
+ESPSettings:AddDivider()
+ESPSettings:AddLabel("Box color"):AddColorPicker("ESPBoxColor", {
+	Default  = Color3.fromRGB(170, 150, 50),
+	Title    = "ESP Box Color",
+	Callback = function(Value)
+		MyESPPreview:SetBoxColor(Value)
+	end,
+})
+ESPSettings:AddLabel("Body color"):AddColorPicker("ESPBodyColor", {
+	Default  = Color3.fromRGB(170, 150, 50),
+	Title    = "ESP Body Color",
+	Callback = function(Value)
+		MyESPPreview:SetBodyColor(Value)
+	end,
+})
+ESPSettings:AddDivider()
+ESPSettings:AddToggle("ESPShowUsername", {
+	Text    = "Show Username",
+	Default = true,
+	Callback = function(Value)
+		MyESPPreview:SetShowUsername(Value)
+	end,
+})
+ESPSettings:AddToggle("ESPShowWeapon", {
+	Text    = "Show Weapon",
+	Default = true,
+	Callback = function(Value)
+		MyESPPreview:SetShowWeapon(Value)
+	end,
 })
 Library:SetWatermarkVisibility(true)
 local FrameTimer = tick()
