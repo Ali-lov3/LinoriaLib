@@ -7543,7 +7543,7 @@ end
         end
 
         function Tab:ShowTab()
-            Library.ActiveTab = Name
+            Library.ActiveTab = TabName
             for _, Tab in next, Window.Tabs do
                 Tab:HideTab()
             end
