@@ -563,6 +563,14 @@ Library:OnUnload(function()
 	print("Unloaded!")
 	Library.Unloaded = true
 end)
+local TabGroup = Tabs["UI Settings"]:AddLeftGroupbox("Tabs")
+TabGroup:AddToggle("TabShowName", {
+	Text    = "Show Tab Names",
+	Default = true,
+	Callback = function(Value)
+		Window:SetTabShowName(Value)
+	end,
+})
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
 MenuGroup:AddToggle("KeybindMenuOpen", { Default = Library.KeybindFrame.Visible, Text = "Open Keybind Menu", Callback = function(value) Library.KeybindFrame.Visible = value end })
 MenuGroup:AddToggle("ShowCustomCursor", { Text = "Custom Cursor", Default = true, Callback = function(Value) Library.ShowCustomCursor = Value end })

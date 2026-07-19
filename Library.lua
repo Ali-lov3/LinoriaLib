@@ -5467,6 +5467,8 @@ function Library:CreateWindow(...)
         Tabs = {};
         OriginalTitle = WindowInfo.Title; 
         Title = WindowInfo.Title;
+        TabButtonData = {};
+        TabShowName = true;
     }
     local Outer = Library:Create("Frame", {
         AnchorPoint = WindowInfo.AnchorPoint;
@@ -5600,6 +5602,30 @@ function Library:CreateWindow(...)
         BackgroundColor3 = "MainColor";
         BorderColor3 = "OutlineColor";
     })
+    Window.TabArea      = TabArea
+    Window.TabContainer = TabContainer
+    function Window:SetTabShowName(Value)
+        Window.TabShowName = Value
+        if Value then
+            TabArea.Size           = UDim2.new(0, 110, 1, 0)
+            TabContainer.Position  = UDim2.new(0, 114, 0, 0)
+            TabContainer.Size      = UDim2.new(1, -114, 1, 0)
+        else
+            TabArea.Size           = UDim2.new(0, 36, 1, 0)
+            TabContainer.Position  = UDim2.new(0, 40, 0, 0)
+            TabContainer.Size      = UDim2.new(1, -40, 1, 0)
+        end
+        for _, Entry in next, Window.TabButtonData do
+            Entry.Label.Visible = Value
+            if Entry.Icon then
+                if Value then
+                    Entry.Icon.Position = UDim2.new(0, 7, 0.5, 0)
+                else
+                    Entry.Icon.Position = UDim2.new(0.5, -7, 0.5, 0)
+                end
+            end
+        end
+    end
     function Window:SetWindowTitle(Title)
         if typeof(Title) == "string" then
             Window.Title = Title
@@ -6068,10 +6094,11 @@ function Library:CreateWindow(...)
         if TabIcon then
             local ParsedIcon = Library:GetCustomIcon(TabIcon)
             if ParsedIcon then
+                local iconX = Window.TabShowName and 7 or (16 - 7)
                 TabIconLabel = Library:Create("ImageLabel", {
                     BackgroundTransparency = 1;
                     AnchorPoint = Vector2.new(0, 0.5);
-                    Position = UDim2.new(0, 7, 0.5, 0);
+                    Position = UDim2.new(Window.TabShowName and 0 or 0.5, Window.TabShowName and 7 or -7, 0.5, 0);
                     Size = UDim2.fromOffset(14, 14);
                     Image = ParsedIcon.Url;
                     ImageColor3 = Library.FontColor;
@@ -6089,9 +6116,12 @@ function Library:CreateWindow(...)
             Size = UDim2.new(1, -LabelOffsetX, 1, -1);
             Text = Tab.Name;
             TextXAlignment = Enum.TextXAlignment.Left;
+            Visible = Window.TabShowName;
             ZIndex = 2;
             Parent = TabButton;
         })
+        local _TabEntry = { Label = TabButtonLabel, Icon = TabIconLabel }
+        table.insert(Window.TabButtonData, _TabEntry)
         local Blocker = Library:Create("Frame", {
             BackgroundColor3 = Library.MainColor;
             BorderSizePixel = 0;
@@ -6361,7 +6391,7 @@ end
                 TabIconLabel = Library:Create("ImageLabel", {
                     BackgroundTransparency = 1;
                     AnchorPoint = Vector2.new(0, 0.5);
-                    Position = UDim2.new(0, 7, 0.5, 0);
+                    Position = UDim2.new(Window.TabShowName and 0 or 0.5, Window.TabShowName and 7 or -7, 0.5, 0);
                     Size = UDim2.fromOffset(14, 14);
                     Image = ParsedIcon.Url;
                     ImageColor3 = Library.FontColor;
@@ -6373,6 +6403,7 @@ end
                 Library:AddToRegistry(TabIconLabel, { ImageColor3 = "FontColor" })
                 TabButtonLabel.Position = UDim2.new(0, 25, 0, 0)
                 TabButtonLabel.Size = UDim2.new(1, -25, 1, -1)
+                _TabEntry.Icon = TabIconLabel
             end
         end
         function Tab:AddGroupbox(Info)
