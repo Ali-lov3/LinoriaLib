@@ -294,45 +294,129 @@ type IconModule = {
     Icons: { string },
     GetAsset: (Name: string) -> Icon?,
 }
-local FetchIcons, Icons = pcall(function()
-    return (loadstring(
-        game:HttpGet("https://raw.githubusercontent.com/deividcomsono/lucide-roblox-direct/refs/heads/main/source.lua")
-    ) :: () -> IconModule)()
+local Lucide
+
+pcall(function()
+	Lucide = loadstring(game:HttpGet("https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/icons.lua"))()
 end)
-function IsValidCustomIcon(Icon: string)
-    return typeof(Icon) == "string"
-        and (Icon:match("rbxasset") or Icon:match("roblox%.com/asset/%?id=") or Icon:match("rbxthumb://type="))
+
+local function ResolveIcon(Icon)
+	if type(Icon) == "number" then
+		return "rbxassetid://" .. Icon
+	end
+
+	if type(Icon) == "string" then
+		if string.match(Icon, "^rbxassetid://") then
+			return Icon
+		end
+
+		if string.match(Icon, "^%d+$") then
+			return "rbxassetid://" .. Icon
+		end
+
+		local Name = string.lower(Icon)
+
+		if type(Lucide) == "function" then
+			local ok, Data = pcall(Lucide, Name)
+
+			if ok and type(Data) == "table" then
+				local Id = Data.id or Data.Id or Data[1]
+				local Size = Data.imageRectSize or Data.ImageRectSize or Data[2]
+				local Offset = Data.imageRectOffset or Data.imageRectPosition or Data.ImageRectOffset or Data[3]
+
+				if Id then
+					return "rbxassetid://" .. tostring(Id), Offset, Size
+				end
+			end
+		elseif type(Lucide) == "table" then
+			for _, Set in { Lucide["48px"], Lucide["256px"], Lucide } do
+				if type(Set) == "table" then
+					local Data = Set[Name]
+
+					if type(Data) == "table" and Data[1] then
+						return "rbxassetid://" .. tostring(Data[1]), Data[3], Data[2]
+					end
+				end
+			end
+		end
+	end
+
+	return "rbxassetid://0"
 end
-function Library:GetIcon(IconName: string)
-    if not FetchIcons then
-        return
-    end
-    local Success, Icon = pcall(Icons.GetAsset, IconName)
-    if not Success then
-        return
-    end
-    return Icon
+
+local function ToVector2(Value)
+	if typeof(Value) == "Vector2" then
+		return Value
+	end
+
+	if type(Value) == "table" then
+		return Vector2.new(Value[1] or Value.X or 0, Value[2] or Value.Y or 0)
+	end
+
+	return Vector2.new(0, 0)
 end
+
+local function ApplyIcon(Object, Icon)
+	if not Icon then
+		return
+	end
+
+	local Image, Offset, Size = ResolveIcon(Icon)
+
+	Object.Image = Image
+
+	if Offset then
+		Object.ImageRectOffset = ToVector2(Offset)
+	end
+
+	if Size then
+		Object.ImageRectSize = ToVector2(Size)
+	end
+end
+
+function IsValidCustomIcon(Icon)
+	return typeof(Icon) == "string"
+		and (
+			Icon:match("rbxasset")
+			or Icon:match("roblox%.com/asset/%?id=")
+			or Icon:match("rbxthumb://type=")
+		)
+end
+
+function Library:GetIcon(IconName)
+	local Image, Offset, Size = ResolveIcon(IconName)
+
+	if not Image or Image == "rbxassetid://0" then
+		return
+	end
+
+	return {
+		Url = Image,
+		ImageRectOffset = ToVector2(Offset),
+		ImageRectSize = ToVector2(Size),
+		Custom = false,
+	}
+end
+
 function Library:GetCustomIcon(IconName)
-    -- Accept plain numeric IDs (number or digit-only string) → rbxassetid://
-    if typeof(IconName) == "number" or (typeof(IconName) == "string" and IconName:match("^%d+$")) then
-        IconName = "rbxassetid://" .. tostring(IconName)
-    end
-    if not IsValidCustomIcon(IconName) then
-        return Library:GetIcon(tostring(IconName))
-    else
-        return {
-            Url = tostring(IconName),
-            ImageRectOffset = Vector2.zero,
-            ImageRectSize = Vector2.zero,
-            Custom = true,
-        }
-    end
+	local Image, Offset, Size = ResolveIcon(IconName)
+
+	if not Image then
+		return
+	end
+
+	return {
+		Url = Image,
+		ImageRectOffset = ToVector2(Offset),
+		ImageRectSize = ToVector2(Size),
+		Custom = IsValidCustomIcon(IconName),
+	}
 end
-function Library:SetIconModule(module: IconModule)
-    FetchIcons = true
-    Icons = module
+
+function Library:SetIconModule(module)
+	Lucide = module
 end
+
 function Library:GetBetterColor(Color: Color3, Add: number): Color3
     Add = Add * 2
     return Color3.fromRGB(
